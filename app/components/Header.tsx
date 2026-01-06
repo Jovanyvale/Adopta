@@ -19,7 +19,7 @@ export default function Header() {
                         <Link href="/">About</Link>
                         <Link href="/">Adoptions</Link>
                         <Link href="/">Services</Link>
-                        <Link href="/" className="text-white p-2 bg-black rounded-md">Login | Register</Link >
+                        <Link href="/login" className="text-white px-6 py-2 bg-black rounded-md">Login</Link >
                     </div>
                 </header>
             }
