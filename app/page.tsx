@@ -25,8 +25,26 @@ export default function Home() {
           <img src="/images/adoption-section-image.jpg" alt="adoption dogs" className="rounded-xl md:w-140 w-full" />
         </section>
 
+        {/* Grooming section */}
+        <section>
+          <div className="flex flex-col items-center w-full mx-auto md:mt-70 mt-40 gap-10 bg-red-300 md:px-20 px-6 pt-20 pb-60 text-white text-center">
+            <h2 className="md:text-4xl text-2xl font-bold text-shadow-lg">Grooming sesions</h2>
+            <p className="md:text-2xl text-lg text-center max-w-260 font-semibold text-shadow-lg">Lorem ipsum dolor sit amet consectetur adipisicing elit. Ab accusamus, eligendi eum nemo quos officia? Nisi sequi itaque, exercitationem eos labore hic. At magnam, consequatur ab ut pariatur odio error.</p>
+            <Link href={'/'} className="bg-black p-4 md:text-xl text-md font-semibold rounded-lg">Schedule an appointment</Link>
+          </div>
+          <div className="justify-center relative md:h-140 h-90 w-auto mt-[-200]">
+            <Image
+              src={"/images/services/groomingDog.png"}
+              fill
+              alt="Dog"
+              className="object-contain"
+            />
+          </div>
+        </section>
+
+        {/* Services list */}
         <h2 className="text-4xl font-bold mt-60 mb-20 text-center">Our Services</h2>
-        <section className="services-section flex flex-col md:w-[80%] w-[90%] mx-auto md:gap-20 gap-8">
+        <section className="services-section flex flex-col md:w-[75%] w-[90%] mx-auto md:gap-12 gap-8">
           {services.map((service, index) =>
             <ServiceCard
               key={index + 1}
