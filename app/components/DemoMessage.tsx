@@ -12,9 +12,9 @@ export default function DemoMessage() {
                     <p>Password: <span className="text-green-500">adoptaclient123</span></p>
                 </div>
                 <div className="bg-slate-200 p-3 rounded-lg">
-                    <p className="text-lg font-semibold">Client account</p>
-                    <p>Email: <span className="text-green-500">adoptaclient@hotmail.com</span></p>
-                    <p>Password: <span className="text-green-500">adoptaclient123</span></p>
+                    <p className="text-lg font-semibold">Admin account</p>
+                    <p>Email: <span className="text-green-500">adoptaadmin@hotmail.com</span></p>
+                    <p>Password: <span className="text-green-500">adoptaadmin123</span></p>
                 </div>
             </div>
         </div>
