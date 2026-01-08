@@ -1,10 +1,10 @@
 'use client'
 import { useState } from 'react'
-import Link from 'next/link'
 import { supabaseBrowser } from '@/lib/supabase/browser'
 
 export default function RegisterForm() {
-
+    const [name, setName] = useState('')
+    const [lastName, setLastName] = useState('')
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [message, setMessage] = useState<string | null>(null)
@@ -12,7 +12,7 @@ export default function RegisterForm() {
     async function handleRegister(e: React.FormEvent) {
         e.preventDefault()
 
-        const { error } = await supabaseBrowser.auth.signUp({
+        const { data, error } = await supabaseBrowser.auth.signUp({
             email,
             password,
         })
@@ -20,6 +20,17 @@ export default function RegisterForm() {
         if (error) {
             setMessage(error.message)
             return
+        }
+
+        //Insert user info into the database table 'profiles' as a new user
+        if (data.user) {
+            await supabaseBrowser.from('profiles').insert({
+                id: data.user?.id,
+                name,
+                lastName,
+                email,
+                role: 'user',
+            })
         }
 
         setMessage('Please check your inbox to confirm your email.')
@@ -32,6 +43,10 @@ export default function RegisterForm() {
             <p className="text-xl mt-1">Register form</p>
             <form onSubmit={handleRegister} className="mt-10 md:w-[50%] w-full">
                 <div className="flex flex-col gap-6">
+
+                    <input type="text" placeholder="Name" required onChange={e => setName(e.target.value)} className="w-full rounded-md p-1 border-2 border-neutral-500" />
+
+                    <input type="text" placeholder="Lastname" required onChange={e => setLastName(e.target.value)} className="w-full rounded-md p-1 border-2 border-neutral-500" />
 
                     <input type="email" placeholder="Email" required onChange={e => setEmail(e.target.value)} className="w-full rounded-md p-1 border-2 border-neutral-500" />
 

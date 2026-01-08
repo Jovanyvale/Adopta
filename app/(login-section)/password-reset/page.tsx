@@ -1,11 +1,23 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from "next/navigation"
 import { supabaseBrowser } from '@/lib/supabase/browser'
+import { redirect } from 'next/navigation'
+import { useEffect } from 'react'
 
 export default function ResetPasswordPage() {
     const [password, setPassword] = useState('')
     const [message, setMessage] = useState<string | null>(null)
+    const router = useRouter()
+
+    useEffect(() => {
+        supabaseBrowser.auth.getSession().then(({ data }) => {
+            if (!data.session) {
+                router.replace('/login')
+            }
+        })
+    }, [])
 
     async function handleUpdate(e: React.FormEvent) {
         e.preventDefault()
@@ -20,6 +32,10 @@ export default function ResetPasswordPage() {
         }
 
         setMessage('Contraseña actualizada')
+
+        setTimeout(() => {
+            redirect('/login')
+        }, 1500);
     }
 
     return (
@@ -33,7 +49,7 @@ export default function ResetPasswordPage() {
                     <button type="submit" className="text-white bg-black p-2 rounded-md hover:cursor-pointer">Recover</button>
                 </div>
             </form>
-            {message && <p className="text-red-500 my-3">{message}</p>}
+            {message && <p className="text-green-500 my-3">{message}</p>}
             <div className="flex flex-col md:flex-row items-center gap-2 mt-8">
             </div>
         </div >

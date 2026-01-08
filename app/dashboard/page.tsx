@@ -10,5 +10,14 @@ export default async function Dashboard() {
         redirect('/login')
     }
 
-    return <h1>Bienvenido {data.user.email}</h1>
+    return (
+        <div>
+            <h1>Welcome {data.user.email}</h1>
+
+            <form action="/auth/logout" method='post'>
+                <button type='submit' className='p-2 rounded-lg bg-black text-white hover:cursor-pointer'>Logout</button>
+            </form>
+        </div>
+    )
+
 }

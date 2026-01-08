@@ -18,7 +18,7 @@ export default function LoginForm() {
 
         const { error } = await supabaseBrowser.auth.signInWithPassword({
             email,
-            password,
+            password,      
         })
 
         if (error) {
