@@ -31,7 +31,7 @@ export default function ForgotPassword() {
             <p className="text-xl mt-1">Password recover</p>
             <form onSubmit={handleReset} className="mt-10 md:w-[50%] w-full">
                 <div className="flex flex-col gap-6">
-                    <input type="email" placeholder="Email" defaultValue={"adoptaadmin@hotmail.com"} required onChange={e => setEmail(e.target.value)} className="w-full rounded-md p-1 border-2 border-neutral-500" />
+                    <input type="email" placeholder="Email" required onChange={e => setEmail(e.target.value)} className="w-full rounded-md p-1 border-2 border-neutral-500" />
 
                     <button type="submit" className="text-white bg-black p-2 rounded-md hover:cursor-pointer">Recover</button>
                 </div>

@@ -1,5 +1,7 @@
 'use client'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 import { supabaseBrowser } from '@/lib/supabase/browser'
 
 export default function RegisterForm() {
@@ -8,13 +10,30 @@ export default function RegisterForm() {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [message, setMessage] = useState<string | null>(null)
+    const router = useRouter()
+
+    //Redirect user if already loged in
+    useEffect(() => {
+        supabaseBrowser.auth.getSession().then(({ data }) => {
+            if (data.session) {
+                router.replace('/dashboard')
+            }
+        })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
 
     async function handleRegister(e: React.FormEvent) {
         e.preventDefault()
-
         const { data, error } = await supabaseBrowser.auth.signUp({
             email,
             password,
+            options: {
+                data: {
+                    name,
+                    lastName,
+                    role: 'user',
+                },
+            },
         })
 
         if (error) {
@@ -22,16 +41,13 @@ export default function RegisterForm() {
             return
         }
 
-        //Insert user info into the database table 'profiles' as a new user
-        if (data.user) {
-            await supabaseBrowser.from('profiles').insert({
-                id: data.user?.id,
-                name,
-                lastName,
-                email,
-                role: 'user',
-            })
-        }
+        await supabaseBrowser.from('profiles').insert({
+            id: data.user?.id,
+            name,
+            lastname: lastName,
+            email,
+            role: 'user'
+        })
 
         setMessage('Please check your inbox to confirm your email.')
     }

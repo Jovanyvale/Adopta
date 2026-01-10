@@ -11,12 +11,14 @@ export default function ResetPasswordPage() {
     const [message, setMessage] = useState<string | null>(null)
     const router = useRouter()
 
+    //Redirect user if NOT loged in
     useEffect(() => {
         supabaseBrowser.auth.getSession().then(({ data }) => {
             if (!data.session) {
                 router.replace('/login')
             }
         })
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     async function handleUpdate(e: React.FormEvent) {

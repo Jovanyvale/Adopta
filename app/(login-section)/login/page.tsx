@@ -3,6 +3,7 @@ import Link from "next/link"
 import { supabaseBrowser } from '@/lib/supabase/browser'
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { useEffect } from "react"
 import DemoMessage from "@/app/components/DemoMessage"
 
 export default function LoginForm() {
@@ -12,13 +13,23 @@ export default function LoginForm() {
     const [error, setError] = useState<string | null>(null)
     const router = useRouter();
 
+    //Redirect user if already loged in
+    useEffect(() => {
+        supabaseBrowser.auth.getSession().then(({ data }) => {
+            if (data.session) {
+                router.replace('/dashboard')
+            }
+        })
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+
     async function handleLogin(e: React.FormEvent) {
         e.preventDefault();
         setError(null)
 
         const { error } = await supabaseBrowser.auth.signInWithPassword({
             email,
-            password,      
+            password,
         })
 
         if (error) {
@@ -38,8 +49,11 @@ export default function LoginForm() {
                 <p className="text-xl mt-1">Login form</p>
                 <form onSubmit={handleLogin} className="mt-10 md:w-[50%] w-full">
                     <div className="flex flex-col gap-6">
-                        <input type="email" placeholder="Email" defaultValue={"adoptaadmin@hotmail.com"} required onChange={e => setEmail(e.target.value)} className="w-full rounded-md p-1 border-2 border-neutral-500" />
-                        <input type="text" placeholder="Password" defaultValue={"adoptaadmin123"} required onChange={e => setPassword(e.target.value)} className="w-full rounded-md p-1 border-2 border-neutral-500" />
+
+                        <input type="email" placeholder="Email" required onChange={e => setEmail(e.target.value)} className="w-full rounded-md p-1 border-2 border-neutral-500" />
+
+                        <input type="text" placeholder="Password" required onChange={e => setPassword(e.target.value)} className="w-full rounded-md p-1 border-2 border-neutral-500" />
+
                         <button type="submit" className="text-white bg-black p-2 rounded-md hover:cursor-pointer">Login</button>
                     </div>
                 </form>
@@ -50,7 +64,7 @@ export default function LoginForm() {
                 </div>
                 <div className="flex flex-col md:flex-row items-center gap-2 mt-8">
                     <p>Do not remember your password?</p>
-                    <Link href={'/register'} className="text-blue-500 font-semibold">Reset password</Link>
+                    <Link href={'/forgot-password'} className="text-blue-500 font-semibold">Reset password</Link>
                 </div>
             </div >
         </div>
