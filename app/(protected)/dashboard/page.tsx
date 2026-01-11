@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import AiAssistance from '@/app/components/AiAssistance';
 
 export default async function Dashboard() {
 
@@ -16,6 +17,8 @@ export default async function Dashboard() {
     return (
         <div>
             <h1>Welcome {profile?.name}</h1>
+
+            <AiAssistance />
 
             <form action="/auth/logout" method='post'>
                 <button type='submit' className='p-2 rounded-lg bg-black text-white hover:cursor-pointer'>Logout</button>

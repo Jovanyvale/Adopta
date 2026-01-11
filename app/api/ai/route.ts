@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
+    console.log("Funciona")
     const { input } = await req.json();
 
     if (!input || typeof input !== "string") {
@@ -15,7 +16,7 @@ export async function POST(req: Request) {
     const finalPrompt = `${systemPrompt}, User: ${input}`;
 
     const response = await fetch(
-        "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2",
+        "https://router.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2",
         {
             method: "POST",
             headers: {
@@ -25,7 +26,8 @@ export async function POST(req: Request) {
             body: JSON.stringify({
                 inputs: finalPrompt,
                 parameters: {
-                    max_new_tokens: 110,
+                    max_new_tokens: 190,
+                    return_full_text: false,
                     temperature: 0.4,
                 },
             }),
@@ -34,7 +36,14 @@ export async function POST(req: Request) {
 
     const data = await response.json();
 
+    if (data.error) {
+        return NextResponse.json({ response: `Api Error: ${data.error}` }, { status: 500 });
+    }
+
+    const resultText = data[0]?.generated_text || "No response";
+
     return NextResponse.json({
-        text: data[0]?.generated_text ?? "No response",
+        response: resultText.trim(),
     });
-}
+
+} 
