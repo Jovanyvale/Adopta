@@ -2,10 +2,27 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { supabaseBrowser } from "@/lib/supabase/browser";
+import { useEffect, useState } from "react";
 
 export default function Header() {
 
+
+    const [isLogedIn, setIsLogedIn] = useState(false)
     const pathName = usePathname();
+
+    //Verfiy if there is a loged user when the page loads
+    useEffect(() => {
+        async function getUserInfo() {
+            const { data } = await supabaseBrowser.auth.getUser();
+
+            if (data) {
+                setIsLogedIn(true)
+            }
+        }
+
+        getUserInfo();
+    }, [])
 
     const HIDDEN_ROUTES = [
         '/login',
@@ -23,15 +40,15 @@ export default function Header() {
             {/*If is on login or register path the header doesnt shows*/}
             {!hideHeader && (
                 <header className="flex justify-between items-center p-8 mx-auto">
-                    <h1 className="text-3xl">Adopta</h1>
+                    <Link href={'/'} className="text-4xl font-semibold">Adopta</Link>
                     <div className="md:flex gap-5 items-center hidden">
-                        <Link href="/">About</Link>
-                        <Link href="/">Adoptions</Link>
-                        <Link href="/">Services</Link>
-                        <Link href="/login" className="text-white px-6 py-2 bg-black rounded-md">Login</Link >
+                        <Link href="/about">About</Link>
+                        <Link href="/adoptions">Adoptions</Link>
+                        <Link href="/services">Services</Link>
+                        <Link href={isLogedIn ? '/dashboard' : '/login'} className="text-white px-6 py-2 bg-black rounded-md">{isLogedIn ? 'My Account' : 'Login'}</Link >
                     </div>
                 </header>)
             }
-        </div>
+        </div >
     )
 }
