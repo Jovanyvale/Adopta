@@ -4,7 +4,6 @@ export async function POST(req: Request) {
     try {
         const { input } = await req.json();
 
-        // El endpoint de CHAT es el más estable para el Router
         const API_URL = "https://router.huggingface.co/v1/chat/completions";
 
         const response = await fetch(API_URL, {
@@ -14,21 +13,19 @@ export async function POST(req: Request) {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                // Qwen es el modelo con mejor disponibilidad en el router gratuito actualmente
                 model: "Qwen/Qwen2.5-7B-Instruct",
                 messages: [
                     {
                         role: "system",
-                        content: "You are a vet assistant. Respond ONLY with a JSON object: { \"importancia\": \"okay\"|\"warning\"|\"danger\", \"message\": \"string\" }"
+                        content: "You are a professional veterinary assistant. Respond ONLY with a JSON object: { \"importance\": \"none\"|\"okay\"|\"warning\"|\"danger\", \"message\": \"string\" } use none if the prompt is not for veterinary assistance and respond with something like 'Im here only for veterinary helping', do not talk with the user if the topic is not about animal veterinary. Give a definitive answer in 100 words or less; do not expect for the user to respond or provide more information."
                     },
                     { role: "user", content: input }
                 ],
-                max_tokens: 150,
+                max_tokens: 190,
                 temperature: 0.1
             }),
         });
 
-        // Verificamos si la respuesta es OK antes de intentar leer JSON
         if (!response.ok) {
             const errorText = await response.text();
             console.error("Error de la API:", errorText);
@@ -42,6 +39,7 @@ export async function POST(req: Request) {
 
         return NextResponse.json({ response: resultText });
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         console.error("Error Interno:", error.message);
         return NextResponse.json({ error: "Error en el servidor" }, { status: 500 });

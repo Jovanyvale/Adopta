@@ -6,6 +6,6 @@ body {
 }
 
 .adopt_section {
-  background: #58cc73;
-  background: radial-gradient(circle, rgba(88, 204, 115, 1) 0%, rgb(114, 171, 236) 100%);
+  background-color: #008dda;
+  background-image: radial-gradient(at 69% 29%, #008dda 0%, transparent 60%), radial-gradient(at 54% 1%, #41c9e2 0%, transparent 50%), radial-gradient(at 15% 24%, #ace2e1 0%, transparent 40%), radial-gradient(at 46% 54%, #f7eedd 0%, transparent 30%);
 }
