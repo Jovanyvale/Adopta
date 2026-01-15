@@ -24,7 +24,7 @@ export default function Home() {
             <h2 className="md:text-5xl text-2xl font-semibold mb-5">Adopt a friend</h2>
             <p className="md:text-2xl text-md md:max-w-240">Explore our complete catalog of pets ready for adoption and give a loving home to a new companion.</p>
           </div>
-          <Link href='/' className="p-3 px-9 text-xl bg-white rounded-2xl text-black font-semibold">Adopt now</Link>
+          <Link href='/adoptions' className="p-3 px-9 text-xl bg-white rounded-2xl text-black font-semibold">Adopt now</Link>
           <img src="/images/adoption-section-image.jpg" alt="adoption dogs" className="rounded-xl md:w-140 w-full" />
         </section>
 

@@ -1,18 +1,31 @@
-import { createClient } from '@/lib/supabase/server'
+'use client'
+import { supabaseBrowser } from '@/lib/supabase/browser';
+import { useEffect, useState } from 'react';
+import type { Profile } from '@/app/types/profile';
 
-export default async function Dashboard() {
+export default function Dashboard() {
 
-    const supabase = await createClient()
-    const { data: authData } = await supabase.auth.getUser();
+    const [profile, setProfile] = useState<Profile | null>(null);
 
     //Gets the loged user info
-    const userId = authData.user?.id
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select('name, lastname, role')
-        .eq('id', userId)
-        .single()
+    useEffect(() => {
+        async function getUserInfo() {
+            const supabase = supabaseBrowser
+            const { data: authData } = await supabase.auth.getUser();
 
+            const userId = authData.user?.id
+            const { data: user } = await supabase
+                .from('profiles')
+                .select('name, lastname, role, email, phone, id')
+                .eq('id', userId)
+                .single()
+
+            setProfile(user)
+        }
+        getUserInfo()
+    }, [])
+
+    console.log(profile)
     return (
         <div>
             <h1>Welcome {profile?.name}</h1>
