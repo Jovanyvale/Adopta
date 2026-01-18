@@ -1,16 +1,39 @@
+'use client'
 import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
+import { useEffect, useState } from "react";
+import type { Profile } from "../types/profile";
+import type { Pet } from "../types/pet";
 
-export default async function ProtectLayout({ children }: Readonly<{ children: React.ReactNode; }>) {
+export type ApiGetUser = {
+    profile: Profile
+    pets: Pet
+}
 
-    const supabase = await createClient()
-    const { data } = await supabase.auth.getUser()
+export default function ProtectLayout({ children }: Readonly<{ children: React.ReactNode; }>) {
 
-    if (!data.user) {
-        redirect('/login')
+    const [user, setUser] = useState<ApiGetUser>({})
+    const [loading, setLoading] = useState<boolean>(true)
+
+    useEffect(() => {
+        async function getUser() {
+            const res = await fetch('/api/db', {
+                method: 'GET',
+                credentials: 'include',
+            })
+            const data = await res.json()
+            setUser(data)
+        }
+        getUser()
+    }, [])
+
+    if (!user) {
+        redirect('/')
     }
 
     return (
-        <>{children}</>
+        <>
+            <p>{`Welcome ${user}`}</p>
+            {children}
+        </>
     )
 }

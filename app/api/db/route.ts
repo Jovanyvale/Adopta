@@ -43,5 +43,5 @@ export async function GET() {
         )
     }
 
-    NextResponse.json({ profile, pets })
+    return NextResponse.json({ profile, pets })
 }
