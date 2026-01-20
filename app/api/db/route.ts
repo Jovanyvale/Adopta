@@ -7,8 +7,10 @@ export async function GET() {
 
     const supabase = await createClient()
 
+    //Get the user info
     const { data: { user }, error } = await supabase.auth.getUser()
 
+    //If couldn't get user return an error
     if (!user || error) {
         return NextResponse.json(
             { error: 'Unauthorized' },
@@ -16,6 +18,7 @@ export async function GET() {
         )
     }
 
+    //Get the own profile from the database
     const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('name, lastname, role, email, phone, id')
@@ -29,6 +32,7 @@ export async function GET() {
         )
     }
 
+    //Get the owners pets from the database
     const { data, error: petsError } = await supabase
         .from('pets')
         .select('id,name,type,last_treatment')

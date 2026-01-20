@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Lexend } from "next/font/google";
 import Header from "./components/Header";
-import { createClient } from "@/lib/supabase/server";
 import "./globals.css";
 
 
@@ -22,16 +21,14 @@ const lexend = Lexend(
 export default async function RootLayout({ children, }: Readonly<{ children: React.ReactNode; }>) {
 
   //Get the current use loged in
-  const supabase = await createClient()
-  const { data } = await supabase.auth.getUser()
-
-  const logedIn = data.user
 
   return (
     <html lang="en">
       <body className={`${lexend.variable}`}>
-        <Header />
-        {children}
+        <div className='min-h-screen'>
+          <Header />
+          {children}
+        </div>
       </body>
     </html >
   );

@@ -26,7 +26,7 @@ export default function LoginForm() {
             return
         }
 
-        redirect('/dashboard')
+        redirect('/control-panel')
     }
 
     return (

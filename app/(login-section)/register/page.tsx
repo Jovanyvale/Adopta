@@ -7,7 +7,7 @@ export default async function RegisterPage() {
     const { data } = await supabase.auth.getUser()
 
     if (data.user) {
-        redirect('/dashboard')
+        redirect('/control-panel')
     } else {
         return <RegisterForm />
     }
