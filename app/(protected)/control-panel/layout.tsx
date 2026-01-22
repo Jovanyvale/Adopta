@@ -3,6 +3,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
+import ControlPanelNavItem from "@/app/components/ControlPanelNavItem";
 
 export default function ControlPanelLayout({ children }: Readonly<{ children: React.ReactNode; }>) {
 
@@ -10,57 +11,22 @@ export default function ControlPanelLayout({ children }: Readonly<{ children: Re
     const pathName = usePathname();
 
     return (
-        <div className="flex mt-6 h-full">
-            <aside className="w-[22%] hidden md:flex flex-col bg-neutral-200 md:fixed h-full">
+        <div className="flex mt-6 h-full ">
+            <aside className="w-[22%] hidden md:flex flex-col bg-neutral-200 md:fixed h-full rounded-tr-lg">
 
                 {/* Control panel */}
-                <Link href={'/control-panel'} className={`flex h-14 border-b items-center ${pathName == '/control-panel' && 'bg-linear-to-r from-transparent via-transparent to-blue-200 border-r-6 border-r-blue-500'}`}>
-                    <div className="relative w-10 h-[50%]">
-                        <Image src={'/icons/control-panel/control-panel-icon.svg'}
-                            fill
-                            alt="Profile"
-                            className=""
-                        />
-                    </div>
-                    <p>Control panel</p>
-                </Link>
+                <ControlPanelNavItem name="Control panel" image="/icons/control-panel/control-panel-icon.svg" route="/control-panel" />
 
                 {/* Profile */}
-                <Link href={'/control-panel/profile'} className={`flex h-14 border-b items-center ${pathName == '/control-panel/profile' && 'bg-linear-to-r from-transparent via-transparent to-blue-200 border-r-6 border-r-blue-500'}`}>
-                    <div className="relative w-10 h-[50%]">
-                        <Image src={'/icons/control-panel/profile-icon.svg'}
-                            fill
-                            alt="Profile"
-                            className=""
-                        />
-                    </div>
-                    <p>Profile</p>
-                </Link>
+                <ControlPanelNavItem name="Profile" image="/icons/control-panel/profile-icon.svg" route="/control-panel/profile" />
 
                 {/* Pets */}
-                <Link href={'/control-panel/pets'} className={`flex h-14 border-b items-center ${pathName == '/control-panel/pets' && 'bg-linear-to-r from-transparent via-transparent to-blue-200 border-r-6 border-r-blue-500'}`}>
-                    <div className="relative w-10 h-[50%]">
-                        <Image src={'/icons/control-panel/pet-icon.svg'}
-                            fill
-                            alt="Profile"
-                            className=""
-                        />
-                    </div>
-                    <p>Pets</p>
-                </Link>
+                <ControlPanelNavItem name="Pets" image="/icons/control-panel/pet-icon.svg" route="/control-panel/pets" />
 
                 {/* Services */}
-                <Link href={'/control-panel/services'} className={`flex h-14 border-b items-center ${pathName == '/control-panel/services' && 'bg-linear-to-r from-transparent via-transparent to-blue-200 border-r-6 border-r-blue-500'}`}>
-                    <div className="relative w-10 h-[50%]">
-                        <Image src={'/icons/control-panel/services-icon.svg'}
-                            fill
-                            alt="Profile"
-                            className=""
-                        />
-                    </div>
-                    <p>Services</p>
-                </Link>
+                <ControlPanelNavItem name="Services" image="/icons/control-panel/services-icon.svg" route="/control-panel/services" />
             </aside>
+
             <main>
                 {children}
             </main>
