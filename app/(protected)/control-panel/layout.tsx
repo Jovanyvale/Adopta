@@ -11,8 +11,8 @@ export default function ControlPanelLayout({ children }: Readonly<{ children: Re
     const pathName = usePathname();
 
     return (
-        <div className="flex mt-6 h-full ">
-            <aside className="w-[22%] hidden md:flex flex-col bg-neutral-200 md:fixed h-full rounded-tr-lg">
+        <div className="flex h-[calc(100vh-128px)] mt-6">
+            <aside className="w-[22%] hidden md:flex flex-col bg-neutral-200 rounded-tr-lg">
 
                 {/* Control panel */}
                 <ControlPanelNavItem name="Control panel" image="/icons/control-panel/control-panel-icon.svg" route="/control-panel" />
@@ -27,7 +27,7 @@ export default function ControlPanelLayout({ children }: Readonly<{ children: Re
                 <ControlPanelNavItem name="Services" image="/icons/control-panel/services-icon.svg" route="/control-panel/services" />
             </aside>
 
-            <main>
+            <main className="flex-1">
                 {children}
             </main>
         </div >

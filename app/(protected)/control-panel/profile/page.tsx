@@ -1,5 +1,6 @@
+'use client'
+
 import Image from "next/image"
-import { supabaseBrowser } from "@/lib/supabase/browser"
 import { useEffect, useState } from "react"
 
 export default function Profile() {
@@ -20,10 +21,12 @@ export default function Profile() {
 
     return (
         < div className="flex" >
-            <div className="bg-neutral-200" onClick={ }>
+            <div className="bg-neutral-200">
                 <p></p>
                 <div>
-                    <Image src={'/icons/control-panel/profile/id-icon.svg'} />
+                    <Image src={'/icons/control-panel/profile/id-icon.svg'}
+                        fill
+                        alt="profile-icon" />
                 </div>
             </div>
             <div></div>

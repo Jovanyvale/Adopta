@@ -25,7 +25,7 @@ export default async function RootLayout({ children, }: Readonly<{ children: Rea
   return (
     <html lang="en">
       <body className={`${lexend.variable}`}>
-        <div className='min-h-screen'>
+        <div className='min-h-screen flex flex-col'>
           <Header />
           {children}
         </div>

@@ -4,42 +4,74 @@ import type { Profile } from '@/app/types/profile';
 import type { Pet } from '@/app/types/pet';
 
 type ApiGetUser = {
-    profile: Profile
-    pets: Pet[]
+    data: {
+        profile: Profile
+        pets: Pet[]
+    } | null
+    error: string | null
+    loading: boolean
 }
 
 export default function Dashboard() {
 
     //Gets the loged user info
-    const [user, setUser] = useState<ApiGetUser | null>(null)
-
+    const [userData, setUserData] = useState<ApiGetUser>({
+        data: null,
+        error: null,
+        loading: true,
+    });
     useEffect(() => {
         async function getUser() {
-            const res = await fetch('/api/db', {
-                method: 'GET',
-                credentials: 'include',
-            })
-            const data = await res.json()
-            setUser(data)
+            try {
+                const res = await fetch('/api/db', {
+                    method: 'GET',
+                    credentials: 'include',
+                })
+
+                if (!res.ok) {
+                    throw new Error('Error getting user data')
+                }
+                const data = await res.json()
+                setUserData(data)
+            } catch (err) {
+                setUserData({
+                    data: null,
+                    error: err instanceof Error ? err.message : 'Unexpected error',
+                    loading: false
+                })
+            }
+
         }
         getUser()
     }, [])
 
-    return (
-        <div className='container w-[80%] mx-auto mt-10'>
-            {!user ?
-                <p>Getting data</p>
-                :
-                <div>
-                    <h1 className='text-2xl font-semibold '>Welcome {user.profile.name}</h1>
-                    <section className='flex flex-col w-2'>
-                        <form action="/auth/logout" method='post'>
-                            <button type='submit' className='p-2 rounded-lg bg-black text-white hover:cursor-pointer'>Logout</button>
-                        </form>
-                    </section>
-                </div>
-            }
-        </div>
-    )
+    if (userData.loading) {
+        return (
+            <div className="w-full h-full flex items-center justify-center">
+                <p>Loading...</p>
+            </div>
+        );
+    }
 
+    if (userData.error) {
+        return (
+            <div className="w-full h-full flex items-center justify-center">
+                <p className="text-red-700">{userData.error}</p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="container w-[80%] mx-auto mt-10">
+            <h1 className="text-2xl font-semibold">
+                Welcome {userData.data?.profile.name}
+            </h1>
+
+            <form action="/auth/logout" method="post">
+                <button className="p-2 rounded-lg bg-black text-white">
+                    Logout
+                </button>
+            </form>
+        </div>
+    );
 }
