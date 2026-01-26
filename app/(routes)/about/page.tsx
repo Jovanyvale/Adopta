@@ -4,7 +4,7 @@ export default function About() {
 
     return (
         <>
-            <section>
+            <section className="md:mt-12">
                 <div className="flex md:mt-18 mt-8 md:w-[70%] w-[90%] mx-auto md:h-110">
                     <div className="flex flex-col md:w-[70%] self-center bg-linear-to-bl from-[#58880f] via-[#1cc459] to-[#0f7631] p-8 rounded-2xl text-white">
                         <h2 className="md:text-4xl text-2xl font-semibold">About us</h2>
@@ -20,7 +20,7 @@ export default function About() {
                 </div>
             </section>
 
-            <section className="flex justify-between mt-12 lg:w-[70%] md:w-[90%] md:flex-row flex-col  mx-auto md:gap-0 gap-4">
+            <section className="flex justify-between mt-12 md:mt-22 lg:w-[70%] md:w-[90%] md:flex-row flex-col  mx-auto md:gap-0 gap-4">
                 <div className="p-3 bg-black text-white rounded-full flex gap-1 md:w-auto w-70 self-center justify-center">
                     <div className="flex">
                         <div className="relative w-5">

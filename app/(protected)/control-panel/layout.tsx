@@ -35,10 +35,10 @@ export default function ControlPanelLayout({ children }: Readonly<{ children: Re
             }
 
             {/* Base code */}
-            < div className="flex h-[calc(100vh-128px)] mt-6" >
-                <aside className="w-[22%] hidden md:flex flex-col justify-between bg-neutral-200 rounded-tr-lg">
+            < div className="flex md:flex-row flex-col h-[calc(100vh-96px)] mt-6" >
+                <aside className="md:w-[22%] w-full flex flex-col justify-between bg-neutral-200 rounded-tr-lg">
 
-                    <div>
+                    <div className="md:flex md:flex-col grid grid-cols-2 grid-rows-2">
                         {/* Control panel */}
                         <ControlPanelNavItem name="Control panel" image="/icons/control-panel/control-panel-icon.svg" route="/control-panel" />
 
@@ -53,8 +53,7 @@ export default function ControlPanelLayout({ children }: Readonly<{ children: Re
                     </div>
 
                     {/* Logut button */}
-                    <div className="flex my-5 mx-4">
-
+                    <div className="md:flex my-5 mx-4 hidden">
                         <button className="p-2 rounded-lg bg-black text-white w-full h-14 hover:cursor-pointer" onClick={() => handleClick(true)}>
                             Logout
                         </button>
