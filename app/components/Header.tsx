@@ -4,7 +4,6 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 
 export default function Header() {
 
@@ -12,7 +11,6 @@ export default function Header() {
     const [isLogedIn, setIsLogedIn] = useState(false)
     const [open, setOpen] = useState(false)
     const pathName = usePathname();
-    const router = useRouter()
 
     //When click on a link closes the menu
     const closeMenu = () => {

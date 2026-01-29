@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import type { Profile } from '@/app/types/profile';
 import type { Pet } from '@/app/types/pet';
+import SpotlightCard from '@/app/components/SpotlightCard';
 
 type ApiGetUser = {
     data: {
@@ -14,12 +15,14 @@ type ApiGetUser = {
 
 export default function Dashboard() {
 
-    //Gets the loged user info
     const [userData, setUserData] = useState<ApiGetUser>({
         data: null,
         error: null,
         loading: true,
     });
+    const [schedules, setSchedules] = useState()
+
+    //Gets the loged user info
     useEffect(() => {
         async function getUser() {
             try {
@@ -32,7 +35,12 @@ export default function Dashboard() {
                     throw new Error('Error getting user data')
                 }
                 const data = await res.json()
-                setUserData(data)
+                setUserData({
+                    data: data,
+                    error: null,
+                    loading: false
+                })
+
             } catch (err) {
                 setUserData({
                     data: null,
@@ -44,6 +52,35 @@ export default function Dashboard() {
         }
         getUser()
     }, [])
+
+    //Gets the schedules related to the users pet
+    useEffect(() => {
+        async function getSchedules() {
+            try {
+                const res = await fetch('/api/db/getSchedules', {
+                    method: 'GET',
+                    credentials: 'include',
+                })
+
+                if (!res.ok) {
+                    throw new Error('Error getting schedules')
+                }
+                const data = await res.json()
+                setSchedules(data)
+                setTimeout(() => {
+                    console.log(schedules)
+                    console.log(data)
+                }, 2000);
+
+            } catch (err) {
+                console.log('Error')
+            }
+
+        }
+        getSchedules();
+    }, [])
+
+
 
     if (userData.loading) {
         return (
@@ -62,16 +99,16 @@ export default function Dashboard() {
     }
 
     return (
-        <div className="container w-[80%] mx-auto mt-10">
-            <h1 className="text-2xl font-semibold">
-                Welcome {userData.data?.profile.name}
-            </h1>
 
-            <form action="/auth/logout" method="post">
-                <button className="p-2 rounded-lg bg-black text-white">
-                    Logout
-                </button>
-            </form>
+
+        <div className="grid grid-cols-7 grid-rows-5 gap-4 h-170 w-[90%] mx-auto mt-16" >
+            <SpotlightCard className="col-span-3 row-span-2">1</SpotlightCard>
+            <SpotlightCard className="col-span-4 row-span-2 col-start-4">2</SpotlightCard>
+            <SpotlightCard className="col-span-2 row-span-2 row-start-3">3</SpotlightCard>
+            <SpotlightCard className="col-span-2 col-start-1 row-start-5">4</SpotlightCard>
+            <SpotlightCard className="col-span-3 row-span-3 col-start-3 row-start-3">5</SpotlightCard>
+            <SpotlightCard className="col-span-2 row-span-3 col-start-6 row-start-3">6</SpotlightCard>
         </div>
+
     );
 }
