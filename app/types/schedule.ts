@@ -1,6 +1,6 @@
-export type Schedules = {
+export type Schedule = {
     id: number,
     pet: number,
     animal_type: string,
-    date: Date,
+    date: string,
 }

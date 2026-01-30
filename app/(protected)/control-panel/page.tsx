@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import type { Profile } from '@/app/types/profile';
 import type { Pet } from '@/app/types/pet';
 import SpotlightCard from '@/app/components/SpotlightCard';
+import { Schedule } from '@/app/types/schedule';
 
 type ApiGetUser = {
     data: {
@@ -15,15 +16,18 @@ type ApiGetUser = {
 
 export default function Dashboard() {
 
+    const [schedules, setSchedules] = useState<Schedule[]>()
     const [userData, setUserData] = useState<ApiGetUser>({
         data: null,
         error: null,
         loading: true,
     });
-    const [schedules, setSchedules] = useState()
 
-    //Gets the loged user info
+    const nowDate = new Date();
+
+
     useEffect(() => {
+        //Gets the loged user info
         async function getUser() {
             try {
                 const res = await fetch('/api/db', {
@@ -51,10 +55,8 @@ export default function Dashboard() {
 
         }
         getUser()
-    }, [])
 
-    //Gets the schedules related to the users pet
-    useEffect(() => {
+        //Gets the schedules related to the users pet
         async function getSchedules() {
             try {
                 const res = await fetch('/api/db/getSchedules', {
@@ -66,11 +68,13 @@ export default function Dashboard() {
                     throw new Error('Error getting schedules')
                 }
                 const data = await res.json()
-                setSchedules(data)
-                setTimeout(() => {
-                    console.log(schedules)
-                    console.log(data)
-                }, 2000);
+
+                //Order the schedules and filter passed ones
+                const orderedSchedules = data
+                    .filter((a: Schedule) => new Date(a.date) >= nowDate)
+                    .sort((a: Schedule, b: Schedule) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+                setSchedules(orderedSchedules)
 
             } catch (err) {
                 console.log('Error')
@@ -78,9 +82,9 @@ export default function Dashboard() {
 
         }
         getSchedules();
+
+
     }, [])
-
-
 
     if (userData.loading) {
         return (
