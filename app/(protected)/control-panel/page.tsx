@@ -27,7 +27,7 @@ export default function Dashboard() {
 
 
     useEffect(() => {
-        //Gets the loged user info
+        //Gets the loged user info-------
         async function getUser() {
             try {
                 const res = await fetch('/api/db', {
@@ -56,7 +56,7 @@ export default function Dashboard() {
         }
         getUser()
 
-        //Gets the schedules related to the users pet
+        //Gets the schedules related to the users pet------
         async function getSchedules() {
             try {
                 const res = await fetch('/api/db/getSchedules', {
@@ -72,19 +72,27 @@ export default function Dashboard() {
                 //Order the schedules and filter passed ones
                 const orderedSchedules = data
                     .filter((a: Schedule) => new Date(a.date) >= nowDate)
-                    .sort((a: Schedule, b: Schedule) => new Date(a.date).getTime() - new Date(b.date).getTime());
+                    .sort((a: Schedule, b: Schedule) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                    .map((a: Schedule) => {
+                        return ({ ...a, date: new Date(a.date) })
+                    })
 
                 setSchedules(orderedSchedules)
 
+                setInterval(() => {
+                    console.log(schedules)
+                }, 3000);
             } catch (err) {
                 console.log('Error')
             }
-
         }
         getSchedules();
-
-
     }, [])
+
+
+    setInterval(() => {
+        console.log(schedules)
+    }, 3000);
 
     if (userData.loading) {
         return (
