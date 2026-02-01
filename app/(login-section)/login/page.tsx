@@ -7,7 +7,7 @@ export default async function LoginPage() {
     const { data } = await supabase.auth.getUser()
 
     if (data.user) {
-        redirect('/control-panel')
+        redirect('/main-panel')
     } else {
         return <LoginForm />
     }

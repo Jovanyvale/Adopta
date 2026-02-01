@@ -40,7 +40,7 @@ export default function ControlPanelLayout({ children }: Readonly<{ children: Re
 
                     <div className="md:flex md:flex-col grid grid-cols-2 grid-rows-2">
                         {/* Control panel */}
-                        <ControlPanelNavItem name="Control panel" image="/icons/control-panel/control-panel-icon.svg" route="/control-panel" />
+                        <ControlPanelNavItem name="Main panel" image="/icons/control-panel/control-panel-icon.svg" route="/main-panel" />
 
                         {/* Profile */}
                         <ControlPanelNavItem name="Profile" image="/icons/control-panel/profile-icon.svg" route="/control-panel/profile" />
