@@ -43,13 +43,13 @@ export default function ControlPanelLayout({ children }: Readonly<{ children: Re
                         <ControlPanelNavItem name="Main panel" image="/icons/control-panel/control-panel-icon.svg" route="/main-panel" />
 
                         {/* Profile */}
-                        <ControlPanelNavItem name="Profile" image="/icons/control-panel/profile-icon.svg" route="/control-panel/profile" />
+                        <ControlPanelNavItem name="Profile" image="/icons/control-panel/profile-icon.svg" route="/main-panel/profile" />
 
                         {/* Pets */}
-                        <ControlPanelNavItem name="Pets" image="/icons/control-panel/pet-icon.svg" route="/control-panel/pets" />
+                        <ControlPanelNavItem name="Pets" image="/icons/control-panel/pet-icon.svg" route="/main-panel/pets" />
 
                         {/* Services */}
-                        <ControlPanelNavItem name="Services" image="/icons/control-panel/services-icon.svg" route="/control-panel/services" />
+                        <ControlPanelNavItem name="Services" image="/icons/control-panel/services-icon.svg" route="/main-panel/services" />
                     </div>
 
                     {/* Logut button */}

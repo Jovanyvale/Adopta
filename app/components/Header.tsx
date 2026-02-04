@@ -42,7 +42,7 @@ export default function Header() {
                         <Link href="/about">About</Link>
                         <Link href="/adoptions">Adoptions</Link>
                         <Link href="/services">Services</Link>
-                        <Link href={isLogedIn ? '/control-panel' : '/login'} className="text-white px-6 py-2 bg-black rounded-md">{isLogedIn ? 'My Account' : 'Login'}</Link >
+                        <Link href={isLogedIn ? '/main-panel' : '/login'} className="text-white px-6 py-2 bg-black rounded-md">{isLogedIn ? 'My Account' : 'Login'}</Link >
                     </div>
 
                     <button
