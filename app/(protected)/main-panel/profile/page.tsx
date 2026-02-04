@@ -17,6 +17,7 @@ export default function Profile() {
         lastname: "",
         phone: ""
     })
+    const [updateStatus, setUpdateStatus] = useState({})
     const [popup, setPopup] = useState(false)
     const [loading, setLoading] = useState(true)
 
@@ -32,7 +33,6 @@ export default function Profile() {
                     throw new Error('Error getting user data')
                 }
                 const data = await res.json()
-                console.log(data)
 
                 setUserData({
                     data: data,
@@ -58,10 +58,22 @@ export default function Profile() {
         getUser()
     }, [])
 
-    setTimeout(() => {
-        console.log(userData)
-        console.log(updatedInfo)
-    }, 3000);
+    async function handleUpdateInfo() {
+        const res = await fetch('/api/updateInfo', {
+            method: 'PUT',
+            credentials: 'include',
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(updatedInfo)
+        })
+
+        const data = await res.json()
+
+        if (!res.ok) {
+
+        }
+    }
 
     function handlePopup(e: React.MouseEvent<HTMLButtonElement>) {
         e.preventDefault()
