@@ -17,7 +17,7 @@ export default function Profile() {
         lastname: "",
         phone: ""
     })
-    const [updateStatus, setUpdateStatus] = useState({})
+    const [updateStatus, setUpdateStatus] = useState('')
     const [popup, setPopup] = useState(false)
     const [loading, setLoading] = useState(true)
 
@@ -58,8 +58,11 @@ export default function Profile() {
         getUser()
     }, [])
 
-    async function handleUpdateInfo() {
-        const res = await fetch('/api/updateInfo', {
+    //Update info function
+    async function handleUpdateInfo(e: React.FormEvent<HTMLFormElement>) {
+        e.preventDefault()
+
+        const res = await fetch('/api/db/updateInfo', {
             method: 'PUT',
             credentials: 'include',
             headers: {
@@ -71,8 +74,15 @@ export default function Profile() {
         const data = await res.json()
 
         if (!res.ok) {
-
+            setUpdateStatus(data.message)
+            setTimeout(() => {
+                setPopup(false)
+            }, 2600);
+            return
         }
+
+        setUpdateStatus(data.message)
+
     }
 
     function handlePopup(e: React.MouseEvent<HTMLButtonElement>) {
@@ -126,7 +136,7 @@ export default function Profile() {
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
                     <div className="bg-white rounded-xl w-[90%] max-w-110 p-6 shadow-lg">
                         <p className="text-lg font-semibold text-center">Update personal info</p>
-                        <form action="" className="flex flex-col gap-4">
+                        <form action="" className="flex flex-col gap-4" onSubmit={handleUpdateInfo}>
                             {/* Name field */}
                             <div>
                                 <label htmlFor="name">Name</label>
@@ -177,11 +187,16 @@ export default function Profile() {
                             </div>
                             <div className="flex md:flex-row flex-col justify-around items-center mt-6 md:gap-0 gap-5">
                                 <button onClick={() => setPopup(false)} className="p-2 rounded-full bg-neutral-200 w-38">Cancel</button>
-                                <button type="submit" className="p-2 rounded-full bg-blue-400 w-38">Submit changes</button>
+                                <button type="submit" className="p-2 rounded-full bg-blue-400 w-38 disabled:opacity-50"
+                                    disabled={
+                                        userData?.data?.profile?.name === updatedInfo?.name &&
+                                        userData?.data?.profile?.lastname === updatedInfo?.lastname &&
+                                        userData?.data?.profile?.phone === updatedInfo?.phone
+                                    }>Submit changes</button>
                             </div>
                         </form>
-                    </div>
-                </div>
+                    </div >
+                </div >
             }
 
             <button onClick={handlePopup} className="p-3 bg-black rounded-full mx-auto text-white hover:cursor-pointer flex mt-8">

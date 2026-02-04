@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";;
 import { NextResponse } from "next/server";
 
-export default async function PUT(req: Request) {
+export async function PUT(req: Request) {
     try {
         const supabase = await createClient()
 
@@ -39,13 +39,13 @@ export default async function PUT(req: Request) {
             .single();
 
         if (updateError) {
-            return NextResponse.json({ message: updateError.message }, { status: 500 });
-
-            return NextResponse.json({
-                message: "Profile updated",
-                data
-            });
+            return NextResponse.json({ message: "Couldn't update info" }, { status: 500 });
         }
+
+        return NextResponse.json({
+            message: "Profile updated",
+            data
+        });
     }
     catch (err) {
         return NextResponse.json(
