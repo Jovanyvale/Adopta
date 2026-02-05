@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { ApiGetUser } from "@/app/types/apiGetUser"
+import Image from "next/image"
 
 type UpdatedInfo = {
     name: string,
@@ -61,6 +62,7 @@ export default function Profile() {
     //Update info function
     async function handleUpdateInfo(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault()
+        setUpdateStatus('loading')
 
         const res = await fetch('/api/db/updateInfo', {
             method: 'PUT',
@@ -74,13 +76,18 @@ export default function Profile() {
         const data = await res.json()
 
         if (!res.ok) {
-            setUpdateStatus(data.message)
+            setUpdateStatus('Error :' + data.message)
             setTimeout(() => {
                 setPopup(false)
+                setUpdateStatus('')
             }, 2600);
             return
         }
 
+        setTimeout(() => {
+            setPopup(false)
+            setUpdateStatus('')
+        }, 2200);
         setUpdateStatus(data.message)
 
     }
@@ -134,7 +141,27 @@ export default function Profile() {
 
             {popup &&
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-                    <div className="bg-white rounded-xl w-[90%] max-w-110 p-6 shadow-lg">
+                    {/* When submited loading appears */}
+                    {updateStatus == 'loading' &&
+                        (< div className="bg-white rounded-xl w-[90%] max-w-110 p-6 shadow-lg flex flex-col items-center">
+                            <p>Updating new info...</p>
+                        </div>)
+                    }
+
+                    {/* When server responses return the message */}
+                    {updateStatus != '' && updateStatus != 'loading' &&
+                        (< div className="bg-white rounded-xl w-[90%] max-w-110 p-6 shadow-lg flex flex-col items-center">
+                            <Image src={updateStatus.includes('Error') ? '/icons/control-panel/failure.svg' : '/icons/control-panel/check.svg'}
+                                width={50}
+                                height={50}
+                                alt="check"
+                            />
+                            <p>{updateStatus}</p>
+                        </div>)
+                    }
+
+                    {/* When there is no server message return the form */}
+                    {updateStatus == '' && (<div className="bg-white rounded-xl w-[90%] max-w-110 p-6 shadow-lg">
                         <p className="text-lg font-semibold text-center">Update personal info</p>
                         <form action="" className="flex flex-col gap-4" onSubmit={handleUpdateInfo}>
                             {/* Name field */}
@@ -196,6 +223,7 @@ export default function Profile() {
                             </div>
                         </form>
                     </div >
+                    )}
                 </div >
             }
 
