@@ -4,5 +4,4 @@ export type Profile = {
     lastname: string
     email: string
     phone: string | null
-    role: string
 }

@@ -71,7 +71,7 @@ export default function Dashboard() {
 
                 setSchedules(orderedSchedules)
             } catch (err) {
-                console.log('Error')
+                console.log(err)
             }
         }
         getSchedules();
@@ -96,7 +96,7 @@ export default function Dashboard() {
 
                 setServices(orderedServices)
             } catch (err) {
-                console.log('Error')
+                console.log(err)
             }
         }
         getServices();
