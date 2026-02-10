@@ -15,11 +15,11 @@ export async function PUT(req: Request) {
         //Data to update
         const { name, lastname, phone } = await req.json();
 
-        if (!name || name.length < 2) {
+        if (!name || name.length < 2 || name.length > 18) {
             return NextResponse.json({ message: "Invalid name" }, { status: 400 });
         }
 
-        if (!lastname || lastname.length < 2) {
+        if (!lastname || lastname.length < 2 || lastname.length > 28) {
             return NextResponse.json({ message: "Invalid lastname" }, { status: 400 });
         }
 

@@ -5,6 +5,7 @@ import type { Profile } from "@/app/types/profile"
 import type { Pet } from "@/app/types/pet"
 import { useMemo } from "react"
 import PetCard from "@/app/components/PetCard"
+import PetInfoPopUp from "@/app/components/popups/PetInfoPopUp"
 
 type PetWithServices = Pet & {
     services: RegisteredService[]
@@ -17,6 +18,7 @@ export default function Profile() {
     const [user, setUser] = useState<Profile>()
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
+    const [popup, setPopup] = useState('')
 
     useEffect(() => {
         async function getUser() {
@@ -64,8 +66,6 @@ export default function Profile() {
             }
         }
         getServices();
-
-
     }, [])
 
     //Reagroup all services with the same 'pet_id'
@@ -106,19 +106,46 @@ export default function Profile() {
     }
 
     return (
-        <div>
-            <div>
-                {petsWithServices.slice(0, 3).map(pet => (
-                    <PetCard
-                        key={pet.id}
-                        petName={pet.name}
-                        petType={pet.type}
-                        lastService={pet.last_treatment}
-                        lastServiceDate={'1111'}
-                    />
-                )
-                )}
+        <>
+            {popup == 'addPet' &&
+                <PetInfoPopUp
+                    onSuccess={() => console.log('hola')}
+                    onClose={() => console.log('cerrar')}
+                />
+            }
+            <div className="grid grid-cols-5 grid-rows-5 gap-4 w-[90%] mx-auto my-auto">
+
+                {/* Title */}
+                <div className="col-span-4 bg-blue-200 justify-items-center place-content-center rounded-2xl">
+                    <p className="text-3xl">My pets</p>
+                </div>
+
+                {/* Services div */}
+                <div className="row-span-3 col-start-5 row-start-1">3</div>
+
+                {/* See all pets button */}
+                <div className="row-span-2 col-start-5 row-start-4">4</div>
+
+                {/* Pets div */}
+                <div className="col-span-4 row-span-4 col-start-1 row-start-2 grid grid-cols-4 gap-4">
+                    {petsWithServices.slice(0, 3).map((pet) => (
+                        <PetCard
+                            key={pet.id}
+                            petName={pet.name}
+                            petType={pet.type}
+                            lastService={pet.services.length <= 0 ? 'No services yet' : pet.services[1].service}
+                            lastServiceDate={pet.services.length <= 0 ? '' : pet.last_treatment}
+                        />
+                    )
+                    )}
+                    <div className="flex items-center justify-center flex-col p-6 bg-neutral-100 rounded-2xl border border-neutral-300
+                    hover:cursor-pointer"
+                        onClick={() => setPopup('addPet')}>
+                        <p className="text-6xl">+</p>
+                        <p className="text-xl">Add a pet</p>
+                    </div>
+                </div>
             </div>
-        </div>
+        </>
     )
 }
