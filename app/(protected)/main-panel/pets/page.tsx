@@ -5,7 +5,7 @@ import type { Profile } from "@/app/types/profile"
 import type { Pet } from "@/app/types/pet"
 import { useMemo } from "react"
 import PetCard from "@/app/components/PetCard"
-import PetInfoPopUp from "@/app/components/popups/PetInfoPopUp"
+import PetInfoPopUp from "@/app/components/popups/PetCreationPopUp"
 
 type PetWithServices = Pet & {
     services: RegisteredService[]
@@ -109,8 +109,8 @@ export default function Profile() {
         <>
             {popup == 'addPet' &&
                 <PetInfoPopUp
-                    onSuccess={() => console.log('hola')}
-                    onClose={() => console.log('cerrar')}
+                    onSuccess={() => console.log('h')}
+                    onClose={() => setPopup('')}
                 />
             }
             <div className="grid grid-cols-5 grid-rows-5 gap-4 w-[90%] mx-auto my-auto">

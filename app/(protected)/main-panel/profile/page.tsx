@@ -139,6 +139,7 @@ export default function Profile() {
                 </span>
             </div>
 
+            {/* Popup code */}
             {popup &&
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
                     {/* When submited loading appears */}

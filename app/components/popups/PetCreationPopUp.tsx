@@ -1,5 +1,7 @@
 import { FormEvent, useEffect, useState } from "react"
 import type { ApiGetUser } from "@/app/types/apiGetUser"
+import { error } from "console"
+import Image from "next/image"
 
 type PetInfoPopUpProps = {
     onSuccess: () => void
@@ -7,47 +9,17 @@ type PetInfoPopUpProps = {
 }
 export default function PetInfoPopUp({ onSuccess, onClose }: PetInfoPopUpProps) {
 
-    const [userData, setUserData] = useState<ApiGetUser>({
-        data: null,
-        error: null,
-        loading: false
-    })
     const [fetchStatus, setFetchStatus] = useState('')
     const [petData, setPetData] = useState({
         petName: '',
         petType: 'other'
     })
 
-    useEffect(() => {
-        async function getUser() {
-            try {
-                const res = await fetch('/api/db', {
-                    method: 'GET',
-                    credentials: 'include'
-                })
-
-                if (!res.ok) {
-                    throw new Error('Error getting user data')
-                }
-                const data = await res.json()
-
-                setUserData({
-                    data: data,
-                    error: null,
-                    loading: false
-                })
-
-            } catch (err) {
-                setUserData(prev => ({ ...prev, error: 'Error getting user data' }))
-            }
-        }
-        getUser()
-    }, [])
-
     //Post the pet
     //This fetch returns an error (or a null if it is successful) 
     async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault()
+        setFetchStatus('fetching')
         try {
             const res = await fetch('/api/db/postPet',
                 {
@@ -61,8 +33,12 @@ export default function PetInfoPopUp({ onSuccess, onClose }: PetInfoPopUpProps) 
             )
 
             if (!res.ok) {
-                onClose()
-                console.log('aca')
+                setFetchStatus('error')
+
+                setTimeout(() => {
+                    onClose()
+                    setFetchStatus('')
+                }, 2600);
                 return
             }
 
@@ -70,22 +46,24 @@ export default function PetInfoPopUp({ onSuccess, onClose }: PetInfoPopUpProps) 
 
             if (data == null) {
                 onSuccess()
+                setFetchStatus('success')
+                setTimeout(() => {
+                    onClose()
+                    setFetchStatus('')
+                }, 2600)
             }
         } catch (err) {
-            onClose()
-            console.log('Falla')
+            setFetchStatus('error')
+            setTimeout(() => {
+                onClose()
+                setFetchStatus('')
+            }, 2600)
         }
-
     }
 
-    setInterval(() => {
-        console.log(petData)
-    }, 3500);
-
     return (
-        <>
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            {fetchStatus == '' && (
                 <div className="w-[90%] max-w-140 p-8 bg-white rounded-xl">
                     <p className="text-xl text-center mb-2">Add a pet</p>
                     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
@@ -137,8 +115,31 @@ export default function PetInfoPopUp({ onSuccess, onClose }: PetInfoPopUpProps) 
                         </div>
                     </form>
                 </div>
+            )}
 
-            </div>
-        </>
+            {/* When fetching */}
+            {fetchStatus == 'fetching' && (
+                < div className="bg-white rounded-xl w-[90%] max-w-110 p-6 shadow-lg flex flex-col items-center">
+                    <p>Creating new pet...</p>
+                </div>
+            )}
+
+            {(fetchStatus === 'success' || fetchStatus === 'error') && (
+                < div className="bg-white rounded-xl w-[90%] max-w-110 p-6 shadow-lg flex flex-col items-center">
+                    <Image src={fetchStatus == 'error'
+                        ? '/icons/control-panel/failure.svg'
+                        : '/icons/control-panel/check.svg'}
+                        width={50}
+                        height={50}
+                        alt="status"
+                    />
+                    <p>{fetchStatus == 'error'
+                        ? 'Error creating a new pet'
+                        : 'New pet created'}</p>
+                </div>)
+            }
+
+
+        </div>
     )
 }
