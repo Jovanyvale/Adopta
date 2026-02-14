@@ -6,6 +6,7 @@ import type { Pet } from "@/app/types/pet"
 import { useMemo } from "react"
 import PetCard from "@/app/components/PetCard"
 import PetInfoPopUp from "@/app/components/popups/PetCreationPopUp"
+import PetsPopUp from "@/app/components/popups/PetsPopUp"
 
 type PetWithServices = Pet & {
     services: RegisteredService[]
@@ -14,6 +15,7 @@ type PetWithServices = Pet & {
 export default function Profile() {
 
     const [services, setServices] = useState<RegisteredService[]>([])
+    const [editingPet, setEditingPet] = useState<number | null>(null)
     const [pets, setPets] = useState<Pet[]>([])
     const [user, setUser] = useState<Profile>()
     const [loading, setLoading] = useState(true)
@@ -105,44 +107,92 @@ export default function Profile() {
         );
     }
 
+    setTimeout(() => { console.log(petsWithServices) }, 2000)
+
     return (
         <>
+            {/* PopUps management */}
             {popup == 'addPet' &&
                 <PetInfoPopUp
-                    onSuccess={() => console.log('h')}
                     onClose={() => setPopup('')}
                 />
             }
-            <div className="grid grid-cols-5 grid-rows-5 gap-4 w-[90%] mx-auto my-auto">
+
+            {popup == 'pets' &&
+                <PetsPopUp
+                    petsWithServices={petsWithServices}
+                    onClose={() => setPopup('')}
+                    onSelectPet={(petId) => {
+                        setPopup('')
+                        setEditingPet(petId)
+                    }
+                    }
+                />
+            }
+
+            {/* Page content */}
+            <div className="w-[90%] mx-auto mt-12 
+                flex flex-col gap-4
+                lg:grid lg:grid-cols-5 lg:grid-rows-5 lg:gap-4">
 
                 {/* Title */}
-                <div className="col-span-4 bg-blue-200 justify-items-center place-content-center rounded-2xl">
-                    <p className="text-3xl">My pets</p>
+                <div className="bg-blue-200 rounded-2xl flex items-center justify-center p-4
+                    lg:col-span-4 lg:justify-items-center lg:place-content-center">
+                    <p className="lg:text-3xl">My pets</p>
                 </div>
 
                 {/* Services div */}
-                <div className="row-span-3 col-start-5 row-start-1">3</div>
+                <div className="bg-neutral-100 rounded-2xl p-4
+                    lg:row-span-3 lg:col-start-5 lg:row-start-1">
+                    3
+                </div>
 
                 {/* See all pets button */}
-                <div className="row-span-2 col-start-5 row-start-4">4</div>
+                <div className="lg:row-span-2 lg:col-start-5 lg:row-start-4">
+                    <button className="h-full w-full flex items-center justify-center flex-col p-6 
+                           bg-neutral-100 rounded-2xl border border-neutral-300
+                           hover:cursor-pointer text-lg hover:bg-amber-100 duration-550"
+                        onClick={() => setPopup('pets')}>
+                        See your pets
+                    </button>
+                </div>
 
                 {/* Pets div */}
-                <div className="col-span-4 row-span-4 col-start-1 row-start-2 grid grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 gap-4 justify-items-center
+                    lg:col-span-4 lg:row-span-4 lg:col-start-1 md:mb-0 mb-10 lg:row-start-2
+                    lg:grid-cols-4">
                     {petsWithServices.slice(0, 3).map((pet) => (
                         <PetCard
                             key={pet.id}
+                            petId={pet.id}
                             petName={pet.name}
                             petType={pet.type}
-                            lastService={pet.services.length <= 0 ? 'No services yet' : pet.services[1].service}
-                            lastServiceDate={pet.services.length <= 0 ? '' : pet.last_treatment}
+                            lastService={
+                                pet.services.length < 1
+                                    ? 'No services yet'
+                                    : pet.services[0].service
+                            }
+                            lastServiceDate={
+                                pet.services.length < 1
+                                    ? ''
+                                    : pet.last_treatment
+                            }
+                            editPet={(petId) => {
+                                setPopup('')
+                                setEditingPet(petId)
+                            }}
                         />
-                    )
-                    )}
-                    <div className="flex items-center justify-center flex-col p-6 bg-neutral-100 rounded-2xl border border-neutral-300
-                    hover:cursor-pointer"
-                        onClick={() => setPopup('addPet')}>
-                        <p className="text-6xl">+</p>
-                        <p className="text-xl">Add a pet</p>
+                    ))}
+
+                    <div
+                        className="flex items-center justify-center flex-col p-6 w-full h-full
+                       bg-neutral-100 rounded-2xl border border-neutral-300
+                       hover:cursor-pointer"
+                        onClick={() => setPopup('addPet')}
+                    >
+
+                        <p className="text-3xl ">+</p>
+                        <p className="text-xl p-2 bg-blue-300 rounded-full">Add a pet</p>
                     </div>
                 </div>
             </div>

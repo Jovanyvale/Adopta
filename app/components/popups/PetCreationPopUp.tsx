@@ -4,10 +4,9 @@ import { error } from "console"
 import Image from "next/image"
 
 type PetInfoPopUpProps = {
-    onSuccess: () => void
     onClose: () => void
 }
-export default function PetInfoPopUp({ onSuccess, onClose }: PetInfoPopUpProps) {
+export default function PetInfoPopUp({ onClose }: PetInfoPopUpProps) {
 
     const [fetchStatus, setFetchStatus] = useState('')
     const [petData, setPetData] = useState({
@@ -45,7 +44,6 @@ export default function PetInfoPopUp({ onSuccess, onClose }: PetInfoPopUpProps) 
             const data = await res.json()
 
             if (data == null) {
-                onSuccess()
                 setFetchStatus('success')
                 setTimeout(() => {
                     onClose()

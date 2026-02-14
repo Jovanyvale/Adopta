@@ -52,7 +52,7 @@ export default function LoginForm() {
                     <Link href={'/register'} className="text-blue-500 font-semibold">Register</Link>
                 </div>
                 <div className="flex flex-col md:flex-row items-center gap-2 mt-8">
-                    <p>Do not remember your password?</p>
+                    <p className="text-center">Do not remember your password?</p>
                     <Link href={'/forgot-password'} className="text-blue-500 font-semibold">Reset password</Link>
                 </div>
             </div >
