@@ -7,6 +7,7 @@ import { useMemo } from "react"
 import PetCard from "@/app/components/PetCard"
 import PetInfoPopUp from "@/app/components/popups/PetCreationPopUp"
 import PetsPopUp from "@/app/components/popups/PetsPopUp"
+import PetEditPopUp from "@/app/components/popups/PetEditPopUp"
 
 type PetWithServices = Pet & {
     services: RegisteredService[]
@@ -90,6 +91,10 @@ export default function Profile() {
         services: servicesByPet[pet.id] ?? []
     }))
 
+    const selectedPet = petsWithServices.find(
+        (pet) => pet.id === editingPet
+    )
+
 
     if (loading) {
         return (
@@ -107,13 +112,11 @@ export default function Profile() {
         );
     }
 
-    setTimeout(() => { console.log(petsWithServices) }, 2000)
-
     return (
         <>
             {/* PopUps management */}
             {popup == 'addPet' &&
-                <PetInfoPopUp
+                < PetInfoPopUp
                     onClose={() => setPopup('')}
                 />
             }
@@ -123,10 +126,21 @@ export default function Profile() {
                     petsWithServices={petsWithServices}
                     onClose={() => setPopup('')}
                     onSelectPet={(petId) => {
-                        setPopup('')
                         setEditingPet(petId)
+                        setPopup('petEdit')
                     }
                     }
+                />
+            }
+
+            {popup == 'petEdit' && editingPet !== null &&
+                <PetEditPopUp
+                    petId={editingPet}
+                    petName={selectedPet?.name ?? ''}
+                    petType={selectedPet?.type ?? ''}
+                    services={selectedPet?.services ?? []}
+                    lastServiceDate={selectedPet?.last_treatment ?? ''}
+                    onClose={() => setPopup('')}
                 />
             }
 
@@ -178,8 +192,8 @@ export default function Profile() {
                                     : pet.last_treatment
                             }
                             editPet={(petId) => {
-                                setPopup('')
                                 setEditingPet(petId)
+                                setPopup('petEdit')
                             }}
                         />
                     ))}
