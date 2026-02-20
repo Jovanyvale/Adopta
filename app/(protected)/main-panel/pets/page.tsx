@@ -3,11 +3,13 @@ import { useEffect, useState } from "react"
 import type { RegisteredService } from "@/app/types/registeredServices"
 import type { Profile } from "@/app/types/profile"
 import type { Pet } from "@/app/types/pet"
+import type { Schedule } from "@/app/types/schedule"
 import { useMemo } from "react"
 import PetCard from "@/app/components/PetCard"
 import PetInfoPopUp from "@/app/components/popups/PetCreationPopUp"
 import PetsPopUp from "@/app/components/popups/PetsPopUp"
 import PetEditPopUp from "@/app/components/popups/PetEditPopUp"
+import SpotlightCard from "@/app/components/SpotlightCard"
 
 type PetWithServices = Pet & {
     services: RegisteredService[]
@@ -18,10 +20,13 @@ export default function Profile() {
     const [services, setServices] = useState<RegisteredService[]>([])
     const [editingPet, setEditingPet] = useState<number | null>(null)
     const [pets, setPets] = useState<Pet[]>([])
+    const [schedules, setSchedules] = useState<Schedule[]>([])
     const [user, setUser] = useState<Profile>()
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
     const [popup, setPopup] = useState('')
+
+    const nowDate = new Date();
 
     useEffect(() => {
         async function getUser() {
@@ -69,6 +74,35 @@ export default function Profile() {
             }
         }
         getServices();
+
+        //Gets the schedules related to the users pet------
+        async function getSchedules() {
+            try {
+                const res = await fetch('/api/db/getSchedules', {
+                    method: 'GET',
+                    credentials: 'include',
+                })
+
+                if (!res.ok) {
+                    throw new Error('Error getting schedules')
+                }
+                const data = await res.json()
+
+                //Order the schedules and filter passed ones
+                const orderedSchedules = data
+                    .filter((a: Schedule) => new Date(a.date) >= nowDate)
+                    .sort((a: Schedule, b: Schedule) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                    .map((a: Schedule) => {
+                        return ({ ...a, date: new Date(a.date) })
+                    })
+
+                setSchedules(orderedSchedules)
+            } catch (err) {
+                console.log(err)
+            }
+        }
+        getSchedules();
+
     }, [])
 
     //Reagroup all services with the same 'pet_id'
@@ -94,6 +128,9 @@ export default function Profile() {
     const selectedPet = petsWithServices.find(
         (pet) => pet.id === editingPet
     )
+    const nextAppointmentPetName = schedules.length > 0
+        ? pets.find((pet) => pet.id === schedules[0].pet_id)?.name
+        : null
 
 
     if (loading) {
@@ -139,7 +176,7 @@ export default function Profile() {
                     petName={selectedPet?.name ?? ''}
                     petType={selectedPet?.type ?? ''}
                     services={selectedPet?.services ?? []}
-                    lastServiceDate={selectedPet?.last_treatment ?? ''}
+                    schedules={schedules.filter(schedule => schedule.pet_id === editingPet)}
                     onClose={() => setPopup('')}
                 />
             }
@@ -155,10 +192,29 @@ export default function Profile() {
                     <p className="lg:text-3xl">My pets</p>
                 </div>
 
-                {/* Services div */}
+                {/* Schedule div */}
                 <div className="bg-neutral-100 rounded-2xl p-4
                     lg:row-span-3 lg:col-start-5 lg:row-start-1">
-                    3
+                    <SpotlightCard className="col-span-3 row-span-4 row-start-3 flex flex-col gap-2 items-center justify-center bg-neutral-100 h-full border-0">
+                        <p>Next appointment</p>
+                        <p className="bg-red-500 text-white p-3 rounded-md text-center text-sm">
+                            {schedules.length > 0
+                                ? new Intl.DateTimeFormat('en-US', {
+                                    month: 'long',
+                                    day: 'numeric',
+                                    hour: 'numeric',
+                                    minute: '2-digit',
+                                    hour12: true,
+                                }).format(new Date(schedules[0].date))
+                                : "You don't have any appointments scheduled."
+                            }
+                        </p>
+                        <p className="truncate text-white text-center p-2 bg-neutral-700 rounded-md text-sm">
+                            {schedules.length > 0
+                                ? `Pet: ${nextAppointmentPetName ?? 'Unknown pet'}`
+                                : ''}
+                        </p>
+                    </SpotlightCard>
                 </div>
 
                 {/* See all pets button */}

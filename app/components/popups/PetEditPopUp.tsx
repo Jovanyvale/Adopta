@@ -1,17 +1,21 @@
 import Image from "next/image"
 import type { RegisteredService } from "@/app/types/registeredServices"
 import { useState } from "react"
+import SpotlightCard from "../SpotlightCard"
+import { Schedule } from "@/app/types/schedule"
+import { useRouter } from "next/navigation"
 
 type PetEditPopUpType = {
     petId: number,
     petName: string,
     petType: string,
     services: RegisteredService[],
-    lastServiceDate: string,
+    schedules: Schedule[],
     onClose: () => void
 }
 
-export default function PetEditPopUp({ petId, petName, petType, services, lastServiceDate, onClose }: PetEditPopUpType) {
+export default function PetEditPopUp({ petId, petName, petType, services, schedules, onClose }: PetEditPopUpType) {
+    const router = useRouter()
 
     const [editing, setEditing] = useState(false)
     const [name, setName] = useState(petName)
@@ -96,6 +100,16 @@ export default function PetEditPopUp({ petId, petName, petType, services, lastSe
                 setFetchStatus('')
             }, 2600)
         }
+    }
+
+    function handleAppointment() {
+        const params = new URLSearchParams({
+            petId: String(petId),
+            petType,
+        })
+
+        onClose()
+        router.push(`/appointments?${params.toString()}`)
     }
 
     return (
@@ -221,10 +235,29 @@ export default function PetEditPopUp({ petId, petName, petType, services, lastSe
                     </div>
 
                     {/* Appointment div */}
-                    <div className="order-4 md:order-0 md:col-span-1 md:row-span-4 md:col-start-3 md:row-start-2">
-                        <div className="bg-red-100 rounded-md">
+                    <div className="order-4 md:order-0 md:col-span-1 md:row-span-4 md:col-start-3 md:row-start-2 flex flex-col items-center gap-2">
+                        <SpotlightCard className="col-span-3 row-span-4 row-start-3 flex flex-col gap-2 items-center justify-center bg-neutral-100 h-full">
                             <p>Next appointment</p>
-                        </div>
+                            <p className="bg-red-500 text-white p-3 rounded-md text-center text-sm">
+                                {schedules.length > 0
+                                    ? new Intl.DateTimeFormat('en-US', {
+                                        month: 'long',
+                                        day: 'numeric',
+                                        hour: 'numeric',
+                                        minute: '2-digit',
+                                        hour12: true,
+                                    }).format(new Date(schedules[0].date))
+                                    : "You don't have any appointments scheduled."
+                                }
+                            </p>
+                        </SpotlightCard>
+
+                        <button
+                            type="button"
+                            onClick={handleAppointment}
+                            className="p-3 text-sm bg-neutral-800 rounded-2xl text-white hover:cursor-pointer">
+                            Make an appointment
+                        </button>
                     </div>
 
                 </div>
@@ -251,7 +284,7 @@ export default function PetEditPopUp({ petId, petName, petType, services, lastSe
                         : 'Pet updated'}</p>
                 </div>)
             }
-            
+
             {/* Delete popup */}
             {(fetchStatus === 'deleteSuccess' || fetchStatus === 'deleteError') && (
                 <div className="bg-white rounded-xl w-[90%] max-w-110 p-6 shadow-lg flex flex-col items-center">
@@ -269,7 +302,7 @@ export default function PetEditPopUp({ petId, petName, petType, services, lastSe
             }
 
             {showDeleteConfirm && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 px-4">
+                <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/60 px-4">
                     <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-lg">
                         <p className="text-lg font-semibold text-neutral-900">Delete pet</p>
                         <p className="mt-2 text-sm text-neutral-600">

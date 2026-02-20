@@ -89,7 +89,7 @@ export default function Dashboard() {
                 }
                 const data = await res.json()
 
-                //Order the schedules and filter passed ones
+                //Order the services
                 const orderedServices = data.sort((a: RegisteredService, b: RegisteredService) =>
                     new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
                 )

@@ -38,7 +38,7 @@ export default function ControlPanelLayout({ children }: Readonly<{ children: Re
             < div className="flex md:flex-row flex-col h-[calc(100vh-96px)] mt-6" >
                 <aside className="md:w-[22%] w-full flex flex-col justify-between bg-neutral-200 rounded-tr-lg">
 
-                    <div className="md:flex md:flex-col grid grid-cols-2 grid-rows-2">
+                    <div className="flex flex-col">
                         {/* Control panel */}
                         <ControlPanelNavItem name="Main panel" image="/icons/control-panel/control-panel-icon.svg" route="/main-panel" />
 
@@ -48,8 +48,6 @@ export default function ControlPanelLayout({ children }: Readonly<{ children: Re
                         {/* Pets */}
                         <ControlPanelNavItem name="Pets" image="/icons/control-panel/pet-icon.svg" route="/main-panel/pets" />
 
-                        {/* Services */}
-                        <ControlPanelNavItem name="Services" image="/icons/control-panel/services-icon.svg" route="/main-panel/services" />
                     </div>
 
                     {/* Logut button */}

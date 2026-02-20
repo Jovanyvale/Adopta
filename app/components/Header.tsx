@@ -58,7 +58,7 @@ export default function Header() {
                         className={`fixed top-0 left-full h-screen w-62 bg-white z-10 shadow-lg transform transition-transform duration-300 ${open ? '-translate-x-full' : ' translate-x-0'}`}>
                         <nav className="p-6">
                             <div className="space-y-6 flex flex-col mt-18">
-                                <Link href={isLogedIn ? '/control-panel' : '/login'} onClick={closeMenu} className="text-white px-6 py-2 text-center mb-10 bg-black rounded-md">{isLogedIn ? 'My Account' : 'Login'} </Link >
+                                <Link href={isLogedIn ? '/main-panel' : '/login'} onClick={closeMenu} className="text-white px-6 py-2 text-center mb-10 bg-black rounded-md">{isLogedIn ? 'My Account' : 'Login'} </Link >
                                 <Link href={'/'} onClick={closeMenu} className="underline">Home</Link >
                                 <Link href={'/services'} onClick={closeMenu} className="underline">Services</Link >
                                 <Link href={'/adoptions'} onClick={closeMenu} className="underline">Adoptions</Link >
