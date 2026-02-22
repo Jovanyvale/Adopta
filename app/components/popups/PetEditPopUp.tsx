@@ -102,6 +102,49 @@ export default function PetEditPopUp({ petId, petName, petType, services, schedu
         }
     }
 
+    async function handleDeleteAppointment() {
+        if (schedules.length < 1) {
+            return
+        }
+
+        const nextSchedule = schedules[0]
+        setFetchStatus('deleteScheduleFetching')
+        try {
+            const res = await fetch('/api/db/deleteSchedule', {
+                method: 'DELETE',
+                credentials: 'include',
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    petId,
+                    scheduleId: nextSchedule.id
+                })
+            })
+
+            if (!res.ok) {
+                setFetchStatus('deleteScheduleError')
+                setTimeout(() => {
+                    onClose()
+                    setFetchStatus('')
+                }, 2600)
+                return
+            }
+
+            setFetchStatus('deleteScheduleSuccess')
+            setTimeout(() => {
+                onClose()
+                setFetchStatus('')
+            }, 2600)
+        } catch (err) {
+            setFetchStatus('deleteScheduleError')
+            setTimeout(() => {
+                onClose()
+                setFetchStatus('')
+            }, 2600)
+        }
+    }
+
     function handleAppointment() {
         const params = new URLSearchParams({
             petId: String(petId),
@@ -185,6 +228,7 @@ export default function PetEditPopUp({ petId, petName, petType, services, schedu
                         }
                     </div>
 
+                    {/* Edit and delete buttons */}
                     <div className="order-1 md:order-0 md:col-span-1 md:row-span-1 md:col-start-3 md:row-start-1 h-auto">
                         <div className="w-full bg-neutral-100 border border-neutral-300 rounded-xl p-3 flex items-center justify-center gap-3">
                             <button
@@ -250,6 +294,16 @@ export default function PetEditPopUp({ petId, petName, petType, services, schedu
                                     : "You don't have any appointments scheduled."
                                 }
                             </p>
+
+                            {schedules.length > 0 && (
+                                <button
+                                    type="button"
+                                    onClick={handleDeleteAppointment}
+                                    className="p-3 text-sm bg-red-600 rounded-2xl text-white hover:cursor-pointer"
+                                >
+                                    Delete next appointment
+                                </button>
+                            )}
                         </SpotlightCard>
 
                         <button
@@ -258,6 +312,8 @@ export default function PetEditPopUp({ petId, petName, petType, services, schedu
                             className="p-3 text-sm bg-neutral-800 rounded-2xl text-white hover:cursor-pointer">
                             Make an appointment
                         </button>
+
+
                     </div>
 
                 </div>
@@ -266,6 +322,11 @@ export default function PetEditPopUp({ petId, petName, petType, services, schedu
             {fetchStatus == 'fetching' && (
                 <div className="bg-white rounded-xl w-[90%] max-w-110 p-6 shadow-lg flex flex-col items-center">
                     <p>Updating pet...</p>
+                </div>
+            )}
+            {fetchStatus == 'deleteScheduleFetching' && (
+                <div className="bg-white rounded-xl w-[90%] max-w-110 p-6 shadow-lg flex flex-col items-center">
+                    <p>Deleting appointment...</p>
                 </div>
             )}
 
@@ -298,6 +359,22 @@ export default function PetEditPopUp({ petId, petName, petType, services, schedu
                     <p>{fetchStatus == 'deleteError'
                         ? 'Error deleting pet'
                         : 'Pet deleted'}</p>
+                </div>)
+            }
+
+            {/* Delete appointment popup */}
+            {(fetchStatus === 'deleteScheduleSuccess' || fetchStatus === 'deleteScheduleError') && (
+                <div className="bg-white rounded-xl w-[90%] max-w-110 p-6 shadow-lg flex flex-col items-center">
+                    <Image src={fetchStatus == 'deleteScheduleError'
+                        ? '/icons/control-panel/failure.svg'
+                        : '/icons/control-panel/check.svg'}
+                        width={50}
+                        height={50}
+                        alt="status"
+                    />
+                    <p>{fetchStatus == 'deleteScheduleError'
+                        ? 'Error deleting appointment'
+                        : 'Appointment deleted'}</p>
                 </div>)
             }
 

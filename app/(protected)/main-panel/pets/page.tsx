@@ -25,6 +25,8 @@ export default function Profile() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
     const [popup, setPopup] = useState('')
+    const [deletingAppointment, setDeletingAppointment] = useState(false)
+    const [appointmentActionMessage, setAppointmentActionMessage] = useState('')
 
     const nowDate = new Date();
 
@@ -132,6 +134,41 @@ export default function Profile() {
         ? pets.find((pet) => pet.id === schedules[0].pet_id)?.name
         : null
 
+    async function handleDeleteAppointment() {
+        if (schedules.length < 1) {
+            return
+        }
+
+        const nextSchedule = schedules[0]
+        setDeletingAppointment(true)
+        setAppointmentActionMessage('')
+
+        try {
+            const res = await fetch('/api/db/deleteSchedule', {
+                method: 'DELETE',
+                credentials: 'include',
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    petId: nextSchedule.pet_id,
+                    scheduleId: nextSchedule.id
+                })
+            })
+
+            if (!res.ok) {
+                throw new Error('Error deleting appointment')
+            }
+
+            setSchedules((prev) => prev.filter((schedule) => schedule.id !== nextSchedule.id))
+            setAppointmentActionMessage('Appointment deleted.')
+        } catch (err) {
+            setAppointmentActionMessage('Could not delete appointment.')
+        } finally {
+            setDeletingAppointment(false)
+        }
+    }
+
 
     if (loading) {
         return (
@@ -209,11 +246,25 @@ export default function Profile() {
                                 : "You don't have any appointments scheduled."
                             }
                         </p>
-                        <p className="truncate text-white text-center p-2 bg-neutral-700 rounded-md text-sm">
-                            {schedules.length > 0
-                                ? `Pet: ${nextAppointmentPetName ?? 'Unknown pet'}`
-                                : ''}
-                        </p>
+                        {schedules.length > 0 &&
+                            < p className="truncate text-white text-center p-2 bg-neutral-700 rounded-md text-sm">
+                                Pet: ${nextAppointmentPetName ?? 'Unknown pet'}
+                            </p>
+                        }
+
+                        {schedules.length > 0 && (
+                            <button
+                                type="button"
+                                onClick={handleDeleteAppointment}
+                                disabled={deletingAppointment}
+                                className="p-3 text-sm bg-red-600 rounded-2xl text-white hover:cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                            >
+                                {deletingAppointment ? 'Deleting...' : 'Delete next appointment'}
+                            </button>
+                        )}
+                        {appointmentActionMessage && (
+                            <p className="text-xs text-center text-neutral-700">{appointmentActionMessage}</p>
+                        )}
                     </SpotlightCard>
                 </div>
 
@@ -265,7 +316,7 @@ export default function Profile() {
                         <p className="text-xl p-2 bg-blue-300 rounded-full">Add a pet</p>
                     </div>
                 </div>
-            </div>
+            </div >
         </>
     )
 }
