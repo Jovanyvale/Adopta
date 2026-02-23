@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Lexend } from "next/font/google";
 import Header from "./components/Header";
+import AuthProvider from "./context/AuthContext";
 import "./globals.css";
 
 
@@ -25,10 +26,12 @@ export default async function RootLayout({ children, }: Readonly<{ children: Rea
   return (
     <html lang="en">
       <body className={`${lexend.variable}`}>
-        <div className='min-h-screen flex flex-col'>
-          <Header />
-          {children}
-        </div>
+        <AuthProvider>
+          <div className='min-h-screen flex flex-col'>
+            <Header />
+            {children}
+          </div>
+        </AuthProvider>
       </body>
     </html >
   );

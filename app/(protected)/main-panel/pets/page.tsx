@@ -248,7 +248,7 @@ export default function Profile() {
                         </p>
                         {schedules.length > 0 &&
                             < p className="truncate text-white text-center p-2 bg-neutral-700 rounded-md text-sm">
-                                Pet: ${nextAppointmentPetName ?? 'Unknown pet'}
+                                Pet: {nextAppointmentPetName ?? 'Unknown pet'}
                             </p>
                         }
 

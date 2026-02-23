@@ -5,20 +5,20 @@ import Link from "next/link"
 export default function ServiceCard({ title, description, image, url, buttonText }: Service) {
 
     return (
-        <div className="flex flex-col md:flex-row md:even:flex-row-reverse h-110 md:gap-10 gap-4 bg-neutral-200 rounded-xl p-4">
-            <div className="flex flex-col flex-1 self-center items-start gap-5 md:mx-6">
-                <h3 className="md:text-2xl text-xl font-semibold">{title}</h3>
-                <p className="md:text-lg text-xs">{description}</p>
-                <Link href={url} className="p-3 bg-black text-white rounded-lg">{buttonText}</Link>
-            </div>
-            <div className="relative flex-1">
+        <article className="flex h-full flex-col overflow-hidden rounded-xl bg-neutral-200">
+            <div className="relative h-44 w-full">
                 <Image
                     src={`/images/services/${image}`}
                     fill
                     alt={image}
-                    className="object-cover rounded-xl"
+                    className="object-cover"
                 />
             </div>
-        </div>
+            <div className="flex h-auto flex-col gap-3 p-4 ">
+                <h3 className="text-lg font-semibold leading-tight">{title}</h3>
+                <p className="text-sm leading-snug text-neutral-700">{description}</p>
+                <Link href={url} className="mt-auto w-fit rounded-lg bg-black px-4 py-2 text-sm text-white">{buttonText}</Link>
+            </div>
+        </article>
     )
 }
