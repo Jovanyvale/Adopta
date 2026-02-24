@@ -1,7 +1,3 @@
-import SpotlightCard from '@/app/components/SpotlightCard';
-import { Schedule } from '@/app/types/schedule';
-import { RegisteredService } from '@/app/types/registeredServices';
-import { ApiGetUser } from '@/app/types/apiGetUser';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import AdminPanel from '@/app/components/main-panel/AdminPanel';

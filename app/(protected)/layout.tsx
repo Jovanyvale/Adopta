@@ -1,7 +1,5 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import UserPanel from "../components/main-panel/UserPanel";
-import AdminPanel from "../components/main-panel/AdminPanel";
 
 export default async function ProtectLayout({ children }: Readonly<{ children: React.ReactNode; }>) {
 
