@@ -123,10 +123,22 @@ export default function AdminPanel() {
             setService('diagnostic')
             setSubmitStatus('success')
             setSubmitMessage('Service submitted successfully.')
+
+            setTimeout(() => {
+                setSubmitStatus('idle')
+                setSubmitMessage('')
+                setShowRegisterServicePopup(false)
+            }, 2500);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Error posting service'
             setSubmitStatus('error')
             setSubmitMessage(errorMessage)
+
+            setTimeout(() => {
+                setSubmitStatus('idle')
+                setSubmitMessage('')
+                setShowRegisterServicePopup(false)
+            }, 2500);
             console.log(err)
         }
     }
@@ -206,91 +218,106 @@ export default function AdminPanel() {
             {/*Register service Popup */}
             {showRegisterServicePopup && (
                 <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-                    <div className="w-full max-w-md rounded-xl bg-white p-6 border border-neutral-300">
-                        <h3 className="text-xl text-neutral-800 mb-4">Register service</h3>
 
-                        <form onSubmit={handleRegisterServiceSubmit} className="flex flex-col gap-4">
-                            <div className="flex flex-col gap-2">
-                                <label htmlFor="petId" className="text-sm text-neutral-700">Pet ID</label>
-                                <input
-                                    id="petId"
-                                    type="text"
-                                    inputMode="numeric"
-                                    maxLength={6}
-                                    pattern="[0-9]{1,6}"
-                                    value={petId}
-                                    onChange={handlePetIdChange}
-                                    className="p-2 rounded-lg border border-neutral-300"
-                                    placeholder="Only numbers"
-                                />
-                            </div>
+                    {/* Shows the status */}
+                    {submitStatus === 'loading' && (
+                        <div className="w-full max-w-md rounded-xl bg-white p-6 border border-neutral-300 text-center">
+                            <p className="text-md font-bold text-neutral-600">{submitMessage}</p>
+                        </div>
+                    )}
+                    {submitStatus === 'success' && (
+                        <div className="w-full max-w-md rounded-xl bg-white p-6 border border-neutral-300 text-center">
+                            <p className="text-md font-bold text-green-700">{submitMessage}</p>
+                        </div>
+                    )}
+                    {submitStatus === 'error' && (
+                        <div className="w-full max-w-md rounded-xl bg-white p-6 border border-neutral-300 text-center">
+                            <p className="text-md font-bold text-red-600">{submitMessage}</p>
+                        </div>
+                    )}
 
-                            <div className="flex flex-col gap-2">
-                                <label htmlFor="petType" className="text-sm text-neutral-700">Pet type</label>
-                                <select
-                                    id="petType"
-                                    value={petType}
-                                    onChange={(e) => setPetType(e.target.value)}
-                                    className="p-2 rounded-lg border border-neutral-300"
-                                >
-                                    <option value="other">Other</option>
-                                    <option value="dog">Dog</option>
-                                    <option value="cat">Cat</option>
-                                    <option value="rabbit">Rabbit</option>
-                                    <option value="bird">Bird</option>
-                                    <option value="reptile">Reptile</option>
-                                    <option value="rodent">Rodent</option>
-                                </select>
-                            </div>
 
-                            <div className="flex flex-col gap-2">
-                                <label htmlFor="service" className="text-sm text-neutral-700">Service</label>
-                                <select
-                                    id="service"
-                                    value={service}
-                                    onChange={(e) => setService(e.target.value)}
-                                    className="p-2 rounded-lg border border-neutral-300"
-                                >
-                                    <option value="diagnostic">Diagnostic</option>
-                                    <option value="microchipping">Microchipping</option>
-                                    <option value="sterilization">Sterilization</option>
-                                    <option value="vaccination">Vaccination</option>
-                                    <option value="dental care">Dental care</option>
-                                    <option value="surgery">Surgery</option>
-                                    <option value="emergency care">Emergency care</option>
-                                    <option value="grooming">Grooming</option>
-                                </select>
-                            </div>
+                    {/* Shows the form when the submitStatus is not idle */}
+                    {submitStatus == 'idle' &&
+                        <div className="w-full max-w-md rounded-xl bg-white p-6 border border-neutral-300">
+                            <h3 className="text-xl text-neutral-800 mb-4">Register service</h3>
 
-                            <div className="flex gap-3 mt-2">
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setShowRegisterServicePopup(false)
-                                        setSubmitStatus('idle')
-                                        setSubmitMessage('')
-                                    }}
-                                    className="w-full p-2 rounded-lg bg-neutral-200"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={submitStatus === 'loading'}
-                                    className="w-full p-2 rounded-lg bg-black text-white disabled:opacity-60 disabled:cursor-not-allowed"
-                                >
-                                    {submitStatus === 'loading' ? 'Submitting...' : 'Submit'}
-                                </button>
-                            </div>
+                            <form onSubmit={handleRegisterServiceSubmit} className="flex flex-col gap-4">
+                                <div className="flex flex-col gap-2">
+                                    <label htmlFor="petId" className="text-sm text-neutral-700">Pet ID</label>
+                                    <input
+                                        id="petId"
+                                        type="text"
+                                        inputMode="numeric"
+                                        maxLength={6}
+                                        pattern="[0-9]{1,6}"
+                                        value={petId}
+                                        onChange={handlePetIdChange}
+                                        className="p-2 rounded-lg border border-neutral-300"
+                                        placeholder="Only numbers"
+                                    />
+                                </div>
 
-                            {submitStatus === 'success' && (
-                                <p className="text-sm text-green-700">{submitMessage}</p>
-                            )}
-                            {submitStatus === 'error' && (
-                                <p className="text-sm text-red-600">{submitMessage}</p>
-                            )}
-                        </form>
-                    </div>
+                                <div className="flex flex-col gap-2">
+                                    <label htmlFor="petType" className="text-sm text-neutral-700">Pet type</label>
+                                    <select
+                                        id="petType"
+                                        value={petType}
+                                        onChange={(e) => setPetType(e.target.value)}
+                                        className="p-2 rounded-lg border border-neutral-300"
+                                    >
+                                        <option value="other">Other</option>
+                                        <option value="dog">Dog</option>
+                                        <option value="cat">Cat</option>
+                                        <option value="rabbit">Rabbit</option>
+                                        <option value="bird">Bird</option>
+                                        <option value="reptile">Reptile</option>
+                                        <option value="rodent">Rodent</option>
+                                    </select>
+                                </div>
+
+                                <div className="flex flex-col gap-2">
+                                    <label htmlFor="service" className="text-sm text-neutral-700">Service</label>
+                                    <select
+                                        id="service"
+                                        value={service}
+                                        onChange={(e) => setService(e.target.value)}
+                                        className="p-2 rounded-lg border border-neutral-300"
+                                    >
+                                        <option value="diagnostic">Diagnostic</option>
+                                        <option value="microchipping">Microchipping</option>
+                                        <option value="sterilization">Sterilization</option>
+                                        <option value="vaccination">Vaccination</option>
+                                        <option value="dental care">Dental care</option>
+                                        <option value="surgery">Surgery</option>
+                                        <option value="emergency care">Emergency care</option>
+                                        <option value="grooming">Grooming</option>
+                                    </select>
+                                </div>
+
+                                <div className="flex gap-3 mt-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setShowRegisterServicePopup(false)
+                                            setSubmitStatus('idle')
+                                            setSubmitMessage('')
+                                        }}
+                                        className="w-full p-2 rounded-lg bg-neutral-200"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={submitStatus === 'loading'}
+                                        className="w-full p-2 rounded-lg bg-black text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                    >
+                                        Submit
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    }
                 </div>
             )}
         </>
