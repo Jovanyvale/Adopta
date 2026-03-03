@@ -8,6 +8,8 @@ import { useAuth } from "@/app/context/AuthContext";
 export default function UserPanel() {
     const [schedules, setSchedules] = useState<Schedule[]>([])
     const [services, setServices] = useState<RegisteredService[]>([])
+    const [showSchedulesPopup, setShowSchedulesPopup] = useState(false)
+    const [now, setNow] = useState(new Date())
     const { user, loading, error } = useAuth();
 
     const nowDate = new Date();
@@ -67,6 +69,43 @@ export default function UserPanel() {
         getServices();
     }, [])
 
+    useEffect(() => {
+        const intervalId = setInterval(() => {
+            setNow(new Date())
+        }, 1000)
+
+        return () => clearInterval(intervalId)
+    }, [])
+
+    const todaySchedules = schedules.filter((schedule) => {
+        const scheduleDate = new Date(schedule.date)
+        return (
+            scheduleDate.getFullYear() === now.getFullYear() &&
+            scheduleDate.getMonth() === now.getMonth() &&
+            scheduleDate.getDate() === now.getDate()
+        )
+    })
+
+    const nextSchedule = schedules.length > 0 ? new Date(schedules[0].date) : null
+    const msToNextAppointment = nextSchedule ? nextSchedule.getTime() - now.getTime() : null
+
+    function formatCountdown(milliseconds: number | null) {
+        if (milliseconds === null) {
+            return "No upcoming appointment"
+        }
+
+        if (milliseconds <= 0) {
+            return "Appointment time reached"
+        }
+
+        const totalSeconds = Math.floor(milliseconds / 1000)
+        const hours = Math.floor(totalSeconds / 3600)
+        const minutes = Math.floor((totalSeconds % 3600) / 60)
+        const seconds = totalSeconds % 60
+
+        return `${hours}h ${minutes}m ${seconds}s`
+    }
+
     if (loading) {
         return (
             <div className="w-full h-full flex items-center justify-center">
@@ -106,6 +145,13 @@ export default function UserPanel() {
                         : "You don't have any appointments scheduled."
                     }
                 </p>
+                <button
+                    type="button"
+                    onClick={() => setShowSchedulesPopup(true)}
+                    className="bg-white text-red-600 border border-red-500 rounded-lg px-4 py-2 hover:bg-red-600 hover:text-white transition-colors cursor-pointer"
+                >
+                    Upcoming schedules
+                </button>
             </SpotlightCard >
 
             {/* 4 — Last services */}
@@ -128,6 +174,76 @@ export default function UserPanel() {
                     ))}
                 </div>
             </SpotlightCard >
+
+            {showSchedulesPopup && (
+                <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+                    <div className="w-full max-w-2xl bg-white border-2 border-red-600 rounded-xl p-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-2xl font-bold text-red-600">Upcoming schedules</h3>
+                            <button
+                                type="button"
+                                onClick={() => setShowSchedulesPopup(false)}
+                                className="text-white bg-red-600 rounded-md px-3 py-1 cursor-pointer"
+                            >
+                                Close
+                            </button>
+                        </div>
+
+                        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                            <p className="text-red-700 font-semibold">Time left for next appointment</p>
+                            <p className="text-2xl text-red-600 font-bold">
+                                {formatCountdown(msToNextAppointment)}
+                            </p>
+                        </div>
+
+                        <div className="mb-4">
+                            <p className="text-lg font-bold text-red-600 mb-2">Today schedules</p>
+                            {todaySchedules.length > 0 ? (
+                                <ul className="space-y-2">
+                                    {todaySchedules.map((schedule) => (
+                                        <li
+                                            key={schedule.id}
+                                            className="border border-red-300 rounded-lg p-3 bg-white text-red-700"
+                                        >
+                                            {new Intl.DateTimeFormat('en-US', {
+                                                hour: 'numeric',
+                                                minute: '2-digit',
+                                                hour12: true,
+                                            }).format(new Date(schedule.date))}
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p className="text-red-700">No schedules for today.</p>
+                            )}
+                        </div>
+
+                        <div>
+                            <p className="text-lg font-bold text-red-600 mb-2">All upcoming schedules</p>
+                            {schedules.length > 0 ? (
+                                <ul className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                                    {schedules.map((schedule) => (
+                                        <li
+                                            key={schedule.id}
+                                            className="border border-red-300 rounded-lg p-3 bg-white text-red-700"
+                                        >
+                                            {new Intl.DateTimeFormat('en-US', {
+                                                month: 'long',
+                                                day: 'numeric',
+                                                hour: 'numeric',
+                                                minute: '2-digit',
+                                                hour12: true,
+                                            }).format(new Date(schedule.date))}
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p className="text-red-700">No upcoming schedules.</p>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

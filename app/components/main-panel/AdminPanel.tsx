@@ -3,17 +3,23 @@ import Image from "next/image"
 import { useEffect, useMemo, useState } from "react"
 import type { ChangeEvent, FormEvent } from "react"
 import type { RegisteredService } from "@/app/types/registeredServices"
+import type { Schedule } from "@/app/types/schedule"
 import { BarChart } from '@mui/x-charts/BarChart';
 
 export default function AdminPanel() {
     const [servicesLast7Days, setServicesLast7Days] = useState<RegisteredService[]>([])
     const [services, setServices] = useState<RegisteredService[]>()
-    const [showRegisterServicePopup, setShowRegisterServicePopup] = useState(false)
+    const [popup, setPopup] = useState('')
     const [petId, setPetId] = useState('')
     const [petType, setPetType] = useState('other')
     const [service, setService] = useState('diagnostic')
     const [submitStatus, setSubmitStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
     const [submitMessage, setSubmitMessage] = useState('')
+
+    const [appointments, setAppointments] = useState<Schedule[]>([])
+    const [appointmentsStatus, setAppointmentsStatus] = useState<'idle' | 'loading' | 'error'>('idle')
+    const [appointmentsError, setAppointmentsError] = useState('')
+    const [now, setNow] = useState(new Date())
 
     const valueFormatter = (value: number | null) => {
         return `${value ?? 0} services`
@@ -85,6 +91,14 @@ export default function AdminPanel() {
         getServices()
     }, [])
 
+    useEffect(() => {
+        const intervalId = setInterval(() => {
+            setNow(new Date())
+        }, 1000)
+
+        return () => clearInterval(intervalId)
+    }, [])
+
     function handlePetIdChange(e: ChangeEvent<HTMLInputElement>) {
         const onlyNumbers = e.target.value.replace(/\D/g, '').slice(0, 6)
         setPetId(onlyNumbers)
@@ -97,7 +111,7 @@ export default function AdminPanel() {
         }
 
         setSubmitStatus('loading')
-        setSubmitMessage('')
+        setSubmitMessage('Loading...')
 
         try {
             const res = await fetch('/api/db/postService', {
@@ -127,7 +141,7 @@ export default function AdminPanel() {
             setTimeout(() => {
                 setSubmitStatus('idle')
                 setSubmitMessage('')
-                setShowRegisterServicePopup(false)
+                setPopup('')
             }, 2500);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Error posting service'
@@ -137,10 +151,75 @@ export default function AdminPanel() {
             setTimeout(() => {
                 setSubmitStatus('idle')
                 setSubmitMessage('')
-                setShowRegisterServicePopup(false)
+                setPopup('')
             }, 2500);
             console.log(err)
         }
+    }
+
+    // fetchs and shows the appointments
+    async function handleOpenAppointmentsPopup() {
+        setPopup('appointments')
+        setAppointmentsStatus('loading')
+        setAppointmentsError('')
+
+        try {
+            const res = await fetch('/api/db/getAllSchedules', {
+                method: 'GET',
+                credentials: 'include',
+            })
+
+            if (!res.ok) {
+                throw new Error('Error getting appointments')
+            }
+
+            const data = await res.json()
+            const nowDate = new Date()
+            const orderedSchedules = data
+                .filter((schedule: Schedule) => new Date(schedule.date) >= nowDate)
+                .sort((a: Schedule, b: Schedule) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                .map((schedule: Schedule) => ({
+                    ...schedule,
+                    date: new Date(schedule.date),
+                }))
+
+            setAppointments(orderedSchedules)
+            setAppointmentsStatus('idle')
+        } catch (err) {
+            setAppointmentsStatus('error')
+            setAppointmentsError('Could not load appointments.')
+            setAppointments([])
+            console.log(err)
+        }
+    }
+
+    const todayAppointments = appointments.filter((schedule) => {
+        const scheduleDate = new Date(schedule.date)
+        return (
+            scheduleDate.getFullYear() === now.getFullYear() &&
+            scheduleDate.getMonth() === now.getMonth() &&
+            scheduleDate.getDate() === now.getDate()
+        )
+    })
+
+    const nextAppointment = appointments.length > 0 ? new Date(appointments[0].date) : null
+    const msToNextAppointment = nextAppointment ? nextAppointment.getTime() - now.getTime() : null
+
+    function formatCountdown(milliseconds: number | null) {
+        if (milliseconds === null) {
+            return 'No upcoming appointment'
+        }
+
+        if (milliseconds <= 0) {
+            return 'Appointment time reached'
+        }
+
+        const totalSeconds = Math.floor(milliseconds / 1000)
+        const hours = Math.floor(totalSeconds / 3600)
+        const minutes = Math.floor((totalSeconds % 3600) / 60)
+        const seconds = totalSeconds % 60
+
+        return `${hours}h ${minutes}m ${seconds}s`
     }
 
     return (
@@ -155,7 +234,7 @@ export default function AdminPanel() {
                             type="button"
                             className="bg-neutral-100 border border-neutral-300 rounded-lg hover:cursor-pointer flex gap-4 px-6 p-4 w-full"
                             onClick={() => {
-                                setShowRegisterServicePopup(true)
+                                setPopup('registerService')
                                 setSubmitStatus('idle')
                                 setSubmitMessage('')
                             }}
@@ -171,7 +250,11 @@ export default function AdminPanel() {
                         </button>
 
                         {/* Appointments button */}
-                        <button className="bg-neutral-100 border border-neutral-300 rounded-lg hover:cursor-pointer flex gap-4 px-6 p-4 w-full">
+                        <button
+                            type="button"
+                            onClick={handleOpenAppointmentsPopup}
+                            className="bg-neutral-100 border border-neutral-300 rounded-lg hover:cursor-pointer flex gap-4 px-6 p-4 w-full"
+                        >
                             <div className="w-16 h-16 bg-red-500 rounded-lg relative flex items-center justify-center">
                                 <Image src={'/icons/admin-panel/appointments-icon.svg'}
                                     alt="Register service icon"
@@ -216,7 +299,7 @@ export default function AdminPanel() {
             </div>
 
             {/*Register service Popup */}
-            {showRegisterServicePopup && (
+            {popup === 'registerService' && (
                 <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
 
                     {/* Shows the status */}
@@ -226,12 +309,22 @@ export default function AdminPanel() {
                         </div>
                     )}
                     {submitStatus === 'success' && (
-                        <div className="w-full max-w-md rounded-xl bg-white p-6 border border-neutral-300 text-center">
+                        <div className="w-full max-w-md rounded-xl bg-white p-6 border border-neutral-300 text-center items-center flex flex-col gap-2">
+                            <div className="w-15 h-15 items-center  relative">
+                                <Image src={'/icons/control-panel/check.svg'}
+                                    fill
+                                    alt="Success icon" />
+                            </div>
                             <p className="text-md font-bold text-green-700">{submitMessage}</p>
                         </div>
                     )}
                     {submitStatus === 'error' && (
-                        <div className="w-full max-w-md rounded-xl bg-white p-6 border border-neutral-300 text-center">
+                        <div className="w-full max-w-md rounded-xl bg-white p-6 border border-neutral-300 text-center items-center flex flex-col gap-2">
+                            <div className="w-15 h-15 items-center  relative">
+                                <Image src={'/icons/control-panel/failure.svg'}
+                                    fill
+                                    alt="Success icon" />
+                            </div>
                             <p className="text-md font-bold text-red-600">{submitMessage}</p>
                         </div>
                     )}
@@ -299,7 +392,7 @@ export default function AdminPanel() {
                                     <button
                                         type="button"
                                         onClick={() => {
-                                            setShowRegisterServicePopup(false)
+                                            setPopup('')
                                             setSubmitStatus('idle')
                                             setSubmitMessage('')
                                         }}
@@ -309,8 +402,7 @@ export default function AdminPanel() {
                                     </button>
                                     <button
                                         type="submit"
-                                        disabled={submitStatus === 'loading'}
-                                        className="w-full p-2 rounded-lg bg-black text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                                        className="w-full p-2 rounded-lg bg-black text-white"
                                     >
                                         Submit
                                     </button>
@@ -318,8 +410,97 @@ export default function AdminPanel() {
                             </form>
                         </div>
                     }
+                </div >
+            )
+            }
+
+            {popup === 'appointments' && (
+                <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+                    <div className="w-full max-w-2xl bg-white border-2 border-black rounded-xl p-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-2xl font-bold text-black">Appointments schedule</h3>
+                            <button
+                                type="button"
+                                onClick={() => setPopup('')}
+                                className="text-white bg-black rounded-md px-3 py-1 border border-red-500 cursor-pointer"
+                            >
+                                Close
+                            </button>
+                        </div>
+
+                        {appointmentsStatus === 'loading' && (
+                            <p className="text-black font-semibold">Loading appointments...</p>
+                        )}
+
+                        {appointmentsStatus === 'error' && (
+                            <p className="text-red-600 font-semibold">{appointmentsError}</p>
+                        )}
+
+                        {appointmentsStatus === 'idle' && (
+                            <>
+                                <div className="bg-white border border-black rounded-lg p-4 mb-4">
+                                    <p className="text-black font-semibold">
+                                        Time left for next appointment
+                                        <span className="inline-block w-2 h-2 rounded-full bg-red-600 ml-2 align-middle" />
+                                    </p>
+                                    <p className="text-2xl text-black font-bold">
+                                        {formatCountdown(msToNextAppointment)}
+                                    </p>
+                                </div>
+
+                                <div className="mb-4">
+                                    <p className="text-lg font-bold text-black mb-2">Today schedules</p>
+                                    {todayAppointments.length > 0 ? (
+                                        <ul className="space-y-2">
+                                            {todayAppointments.map((schedule) => (
+                                                <li
+                                                    key={schedule.id}
+                                                    className="border border-black rounded-lg p-3 bg-white text-black border-l-4 border-l-red-500"
+                                                >
+                                                    Pet #{schedule.pet_id} ({schedule.animal_type})
+                                                    - {new Intl.DateTimeFormat('en-US', {
+                                                        hour: 'numeric',
+                                                        minute: '2-digit',
+                                                        hour12: true,
+                                                    }).format(new Date(schedule.date))}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    ) : (
+                                        <p className="text-black">No schedules for today.</p>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <p className="text-lg font-bold text-black mb-2">All upcoming schedules</p>
+                                    {appointments.length > 0 ? (
+                                        <ul className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                                            {appointments.map((schedule) => (
+                                                <li
+                                                    key={schedule.id}
+                                                    className="border border-black rounded-lg p-3 bg-white text-black border-l-4 border-l-red-500"
+                                                >
+                                                    Pet #{schedule.pet_id} ({schedule.animal_type})
+                                                    - {new Intl.DateTimeFormat('en-US', {
+                                                        month: 'long',
+                                                        day: 'numeric',
+                                                        hour: 'numeric',
+                                                        minute: '2-digit',
+                                                        hour12: true,
+                                                    }).format(new Date(schedule.date))}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    ) : (
+                                        <p className="text-black">No upcoming schedules.</p>
+                                    )}
+                                </div>
+                            </>
+                        )}
+                    </div>
                 </div>
             )}
+
         </>
     )
 }
