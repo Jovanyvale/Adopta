@@ -5,25 +5,21 @@ import type { ChangeEvent, FormEvent } from "react"
 import type { RegisteredService } from "@/app/types/registeredServices"
 import type { Schedule } from "@/app/types/schedule"
 import { BarChart } from '@mui/x-charts/BarChart';
+import SpotlightCard from "../SpotlightCard"
 
 export default function AdminPanel() {
     const [servicesLast7Days, setServicesLast7Days] = useState<RegisteredService[]>([])
-    const [services, setServices] = useState<RegisteredService[]>()
+    const [services, setServices] = useState<RegisteredService[]>([])
     const [popup, setPopup] = useState('')
     const [petId, setPetId] = useState('')
     const [petType, setPetType] = useState('other')
     const [service, setService] = useState('diagnostic')
     const [submitStatus, setSubmitStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
     const [submitMessage, setSubmitMessage] = useState('')
-
     const [appointments, setAppointments] = useState<Schedule[]>([])
     const [appointmentsStatus, setAppointmentsStatus] = useState<'idle' | 'loading' | 'error'>('idle')
     const [appointmentsError, setAppointmentsError] = useState('')
     const [now, setNow] = useState(new Date())
-
-    const valueFormatter = (value: number | null) => {
-        return `${value ?? 0} services`
-    }
 
     const chartData = useMemo(() => {
         const formatter = new Intl.DateTimeFormat('en-US', { weekday: 'short' })
@@ -36,20 +32,67 @@ export default function AdminPanel() {
                 ymd,
                 day: formatter.format(date),
                 services: 0,
+                earnings: 0,
             }
         })
 
-        const servicesCountByDay = servicesLast7Days.reduce<Record<string, number>>((acc, service) => {
+        const servicesCountByDay = servicesLast7Days.reduce<Record<string, { services: number; earnings: number }>>((acc, service) => {
             const ymd = new Date(service.created_at).toISOString().slice(0, 10)
-            acc[ymd] = (acc[ymd] ?? 0) + 1
+            if (!acc[ymd]) {
+                acc[ymd] = { services: 0, earnings: 0 }
+            }
+            acc[ymd].services += 1
+            acc[ymd].earnings += service.earn ?? 0
             return acc
         }, {})
 
         return days.map((day) => ({
             day: day.day,
-            services: servicesCountByDay[day.ymd] ?? 0,
+            services: servicesCountByDay[day.ymd]?.services ?? 0,
+            earnings: servicesCountByDay[day.ymd]?.earnings ?? 0,
         }))
     }, [servicesLast7Days])
+
+    const dashboardStats = useMemo(() => {
+        const servicesLast7DaysCount = servicesLast7Days.length
+        const earningsLast7Days = servicesLast7Days.reduce((sum, item) => sum + (item.earn ?? 0), 0)
+
+        const servicesTodayList = services.filter((item) => {
+            const createdAt = new Date(item.created_at)
+            return (
+                createdAt.getFullYear() === now.getFullYear() &&
+                createdAt.getMonth() === now.getMonth() &&
+                createdAt.getDate() === now.getDate()
+            )
+        })
+
+        const servicesToday = servicesTodayList.length
+        const earningsToday = servicesTodayList.reduce((sum, item) => sum + (item.earn ?? 0), 0)
+
+        return {
+            servicesLast7DaysCount,
+            earningsLast7Days,
+            servicesToday,
+            earningsToday,
+        }
+    }, [servicesLast7Days, services, now])
+
+    const currencyFormatter = useMemo(() => {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+            maximumFractionDigits: 0,
+        })
+    }, [])
+
+    const valueFormatter = (value: number | null, context?: { dataIndex?: number }) => {
+        const servicesCount = value ?? 0
+        const earningsAmount = typeof context?.dataIndex === 'number'
+            ? chartData[context.dataIndex]?.earnings ?? 0
+            : 0
+
+        return `${servicesCount} services - ${currencyFormatter.format(earningsAmount)}`
+    }
 
     useEffect(() => {
         async function getLast7DaysServices() {
@@ -94,7 +137,7 @@ export default function AdminPanel() {
     useEffect(() => {
         const intervalId = setInterval(() => {
             setNow(new Date())
-        }, 1000)
+        }, 60000)
 
         return () => clearInterval(intervalId)
     }, [])
@@ -214,20 +257,43 @@ export default function AdminPanel() {
             return 'Appointment time reached'
         }
 
-        const totalSeconds = Math.floor(milliseconds / 1000)
-        const hours = Math.floor(totalSeconds / 3600)
-        const minutes = Math.floor((totalSeconds % 3600) / 60)
-        const seconds = totalSeconds % 60
+        const totalMinutes = Math.floor(milliseconds / 60000)
+        const hours = Math.floor(totalMinutes / 60)
+        const minutes = totalMinutes % 60
 
-        return `${hours}h ${minutes}m ${seconds}s`
+        return `${hours}h ${minutes}m`
     }
 
     return (
         <>
-            <div className="md:w-[80%] w-[95%] mx-auto">
-                <h2 className="text-xl text-neutral-800 mt-10 mb-4">Admin dashboard</h2>
-                <div className="grid grid-cols-5 grid-rows-7 gap-4">
-                    <div className="col-span-2 row-span-4 w-[90%] mx-auto flex flex-col gap-3">
+            <div className="w-[95%] lg:w-[80%] mx-auto">
+
+                <div className="w-full mb-10 mt-10 flex flex-col gap-4 lg:flex-row lg:items-center">
+                    <h2 className="text-lg md:text-2xl text-neutral-800 lg:flex-1">Admin dashboard</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 w-full lg:w-auto">
+                        <SpotlightCard className="p-4 w-full lg:min-w-[45]">
+                            <h3 className="text-sm text-neutral-600">Services last 7 days</h3>
+                            <p className="text-2xl font-bold text-neutral-900">{dashboardStats.servicesLast7DaysCount}</p>
+                        </SpotlightCard>
+                        <SpotlightCard className="p-4 w-full lg:min-w-[45]">
+                            <h3 className="text-sm text-neutral-600">Earnings last 7 days</h3>
+                            <p className="text-2xl font-bold text-neutral-900">{currencyFormatter.format(dashboardStats.earningsLast7Days)}</p>
+                        </SpotlightCard>
+                        <SpotlightCard className="p-4 w-full lg:min-w-[45]">
+                            <h3 className="text-sm text-neutral-600">Services today</h3>
+                            <p className="text-2xl font-bold text-neutral-900">{dashboardStats.servicesToday}</p>
+                        </SpotlightCard>
+                        <SpotlightCard className="p-4 w-full lg:min-w-[45]">
+                            <h3 className="text-sm text-neutral-600">Earnings today</h3>
+                            <p className="text-2xl font-bold text-neutral-900">{currencyFormatter.format(dashboardStats.earningsToday)}</p>
+                        </SpotlightCard>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-5 lg:grid-rows-7">
+
+                    {/* Buttons */}
+                    <div className="order-2 lg:order-1 col-span-1 lg:col-span-2 lg:row-span-4 w-full lg:w-[90%] mx-auto flex flex-col gap-3 md:text-xl text-dm">
 
                         {/* Register service button */}
                         <button
@@ -246,7 +312,7 @@ export default function AdminPanel() {
                                     height={50}
                                 />
                             </div>
-                            <p className="text-neutral-800 semibold text-xl self-center">Register service</p>
+                            <p className="text-neutral-800 semibold self-center">Register service</p>
                         </button>
 
                         {/* Appointments button */}
@@ -262,7 +328,7 @@ export default function AdminPanel() {
                                     height={50}
                                 />
                             </div>
-                            <p className="text-neutral-800 semibold text-xl self-center">Appointments</p>
+                            <p className="text-neutral-800 semibold self-center">Appointments</p>
                         </button>
 
                         {/* Add adoption pet button */}
@@ -274,13 +340,13 @@ export default function AdminPanel() {
                                     height={50}
                                 />
                             </div>
-                            <p className="text-neutral-800 semibold text-xl self-center">Add adoption pet</p>
+                            <p className="text-neutral-800 semibold self-center">Add adoption pet</p>
                         </button>
 
                     </div>
 
                     {/* Bar chart */}
-                    <div className="col-span-3 row-span-4 col-start-3 row-start-1">
+                    <div className="order-1 lg:order-2 col-span-1 lg:col-span-3 lg:row-span-4 lg:col-start-3 lg:row-start-1">
                         <BarChart
                             dataset={chartData}
                             xAxis={[{ dataKey: 'day' }]}
@@ -292,13 +358,13 @@ export default function AdminPanel() {
                     </div>
 
                     {/* Services list */}
-                    <div className="col-span-5 row-span-3 col-start-1 row-start-5">
+                    <div className="col-span-1 lg:col-span-5 lg:row-span-3 lg:col-start-1 lg:row-start-5">
 
                     </div>
                 </div>
             </div>
 
-            {/*Register service Popup */}
+            {/*Register service popup */}
             {popup === 'registerService' && (
                 <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
 
@@ -414,9 +480,10 @@ export default function AdminPanel() {
             )
             }
 
+            {/* Appointments schedule popup */}
             {popup === 'appointments' && (
                 <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-                    <div className="w-full max-w-2xl bg-white border-2 border-black rounded-xl p-6">
+                    <div className="w-full max-w-2xl bg-white border border-neutral-500 rounded-xl p-6">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-2xl font-bold text-black">Appointments schedule</h3>
                             <button
@@ -438,7 +505,7 @@ export default function AdminPanel() {
 
                         {appointmentsStatus === 'idle' && (
                             <>
-                                <div className="bg-white border border-black rounded-lg p-4 mb-4">
+                                <div className="bg-white border border-neutral-300 rounded-lg p-4 mb-4">
                                     <p className="text-black font-semibold">
                                         Time left for next appointment
                                         <span className="inline-block w-2 h-2 rounded-full bg-red-600 ml-2 align-middle" />
@@ -478,7 +545,7 @@ export default function AdminPanel() {
                                             {appointments.map((schedule) => (
                                                 <li
                                                     key={schedule.id}
-                                                    className="border border-black rounded-lg p-3 bg-white text-black border-l-4 border-l-red-500"
+                                                    className="border border-neutral-300 rounded-lg p-3 bg-white text-black border-l-4 border-l-red-500"
                                                 >
                                                     Pet #{schedule.pet_id} ({schedule.animal_type})
                                                     - {new Intl.DateTimeFormat('en-US', {

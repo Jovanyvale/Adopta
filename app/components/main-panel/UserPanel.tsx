@@ -72,7 +72,7 @@ export default function UserPanel() {
     useEffect(() => {
         const intervalId = setInterval(() => {
             setNow(new Date())
-        }, 1000)
+        }, 60000)
 
         return () => clearInterval(intervalId)
     }, [])
@@ -98,12 +98,11 @@ export default function UserPanel() {
             return "Appointment time reached"
         }
 
-        const totalSeconds = Math.floor(milliseconds / 1000)
-        const hours = Math.floor(totalSeconds / 3600)
-        const minutes = Math.floor((totalSeconds % 3600) / 60)
-        const seconds = totalSeconds % 60
+        const totalMinutes = Math.floor(milliseconds / 60000)
+        const hours = Math.floor(totalMinutes / 60)
+        const minutes = totalMinutes % 60
 
-        return `${hours}h ${minutes}m ${seconds}s`
+        return `${hours}h ${minutes}m`
     }
 
     if (loading) {

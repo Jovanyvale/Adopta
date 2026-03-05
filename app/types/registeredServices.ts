@@ -4,4 +4,5 @@ export type RegisteredService = {
     pet_id: number
     animal_type: string
     service: string
+    earn: number
 }

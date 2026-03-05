@@ -27,6 +27,16 @@ export async function POST(req: Request) {
             "emergency care",
             "grooming",
         ]
+        const prices = {
+            diagnostic: 30,
+            microchipping: 140,
+            sterilization: 240,
+            vaccination: 200,
+            dental_care: 100,
+            surgery: 400,
+            emergency_care: 150,
+            grooming: 50
+        } as const;
 
         let parsedPetId: number | null = null
         if (normalizedPetId !== "") {
@@ -52,13 +62,22 @@ export async function POST(req: Request) {
                 { status: 400 }
             )
         }
-
+        const serviceKey = service.trim().toLowerCase().replace(/\s+/g, "_")
+        if (!(serviceKey in prices)) {
+            return NextResponse.json(
+                { error: "Price not found for service" },
+                { status: 400 }
+            )
+        }
+        
+        const earn = prices[serviceKey as keyof typeof prices]
         const { error: serviceError } = await supabase
             .from("services")
             .insert({
                 pet_id: parsedPetId,
                 animal_type: petType,
                 service,
+                earn
             })
 
         if (serviceError) {
