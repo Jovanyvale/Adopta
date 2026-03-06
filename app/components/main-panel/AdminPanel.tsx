@@ -1,16 +1,23 @@
 'use client'
 import Image from "next/image"
-import { useEffect, useMemo, useState } from "react"
+import { UIEvent, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import type { ChangeEvent, FormEvent } from "react"
 import type { RegisteredService } from "@/app/types/registeredServices"
 import type { Schedule } from "@/app/types/schedule"
 import { BarChart } from '@mui/x-charts/BarChart';
 import SpotlightCard from "../SpotlightCard"
 
+type PopupState = '' | 'registerService' | 'appointments' | 'showServices'
+const SERVICES_PAGE_SIZE = 20
+
 export default function AdminPanel() {
     const [servicesLast7Days, setServicesLast7Days] = useState<RegisteredService[]>([])
     const [services, setServices] = useState<RegisteredService[]>([])
-    const [popup, setPopup] = useState('')
+    const [popupServices, setPopupServices] = useState<RegisteredService[]>([])
+    const [popupServicesLoading, setPopupServicesLoading] = useState(false)
+    const [popupServicesHasMore, setPopupServicesHasMore] = useState(true)
+    const [popupServicesError, setPopupServicesError] = useState('')
+    const [popup, setPopup] = useState<PopupState>('')
     const [petId, setPetId] = useState('')
     const [petType, setPetType] = useState('other')
     const [service, setService] = useState('diagnostic')
@@ -20,6 +27,11 @@ export default function AdminPanel() {
     const [appointmentsStatus, setAppointmentsStatus] = useState<'idle' | 'loading' | 'error'>('idle')
     const [appointmentsError, setAppointmentsError] = useState('')
     const [now, setNow] = useState(new Date())
+
+    // refs
+    const popupServicesOffsetRef = useRef(0)
+    const popupServicesLoadingRef = useRef(false)
+    const popupServicesHasMoreRef = useRef(true)
 
     const chartData = useMemo(() => {
         const formatter = new Intl.DateTimeFormat('en-US', { weekday: 'short' })
@@ -77,6 +89,14 @@ export default function AdminPanel() {
         }
     }, [servicesLast7Days, services, now])
 
+    const sortedServices = useMemo(() => {
+        return [...services].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    }, [services])
+
+    const sortedPopupServices = useMemo(() => {
+        return [...popupServices].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    }, [popupServices])
+
     const currencyFormatter = useMemo(() => {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
@@ -92,6 +112,67 @@ export default function AdminPanel() {
             : 0
 
         return `${servicesCount} services - ${currencyFormatter.format(earningsAmount)}`
+    }
+
+    const fetchPopupServicesPage = useCallback(async (reset = false) => {
+        if (popupServicesLoadingRef.current) {
+            return
+        }
+
+        if (!reset && !popupServicesHasMoreRef.current) {
+            return
+        }
+
+        popupServicesLoadingRef.current = true
+        setPopupServicesLoading(true)
+        setPopupServicesError('')
+
+        try {
+            const offset = reset ? 0 : popupServicesOffsetRef.current
+            const res = await fetch(`/api/db/getServices?limit=${SERVICES_PAGE_SIZE}&offset=${offset}`, {
+                method: 'GET',
+                credentials: 'include',
+            })
+
+            if (!res.ok) {
+                throw new Error('Error services')
+            }
+
+            const data = await res.json() as RegisteredService[]
+            const hasMore = data.length === SERVICES_PAGE_SIZE
+            popupServicesHasMoreRef.current = hasMore
+            setPopupServicesHasMore(hasMore)
+            popupServicesOffsetRef.current = offset + data.length
+
+            setPopupServices((prev) => {
+                const base = reset ? [] : prev
+                const ids = new Set(base.map((item) => item.id))
+                const uniqueIncoming = data.filter((item) => {
+                    if (ids.has(item.id)) {
+                        return false
+                    }
+                    ids.add(item.id)
+                    return true
+                })
+
+                return [...base, ...uniqueIncoming]
+            })
+        } catch (err) {
+            setPopupServicesError('Could not load services.')
+            console.log(err)
+        } finally {
+            popupServicesLoadingRef.current = false
+            setPopupServicesLoading(false)
+        }
+    }, [])
+
+    function handlePopupServicesScroll(e: UIEvent<HTMLDivElement>) {
+        const element = e.currentTarget
+        const nearBottom = element.scrollTop + element.clientHeight >= element.scrollHeight - 24
+
+        if (nearBottom) {
+            void fetchPopupServicesPage(false)
+        }
     }
 
     useEffect(() => {
@@ -125,8 +206,11 @@ export default function AdminPanel() {
                     throw new Error('Error services')
                 }
 
-                const data = await res.json()
-                setServices(data)
+                const data = await res.json() as RegisteredService[]
+                const uniqueServices = data.filter((item, index, array) =>
+                    index === array.findIndex((current) => current.id === item.id)
+                )
+                setServices(uniqueServices)
             } catch (err) {
                 console.log(err)
             }
@@ -290,10 +374,10 @@ export default function AdminPanel() {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-4 lg:grid-cols-5 lg:grid-rows-7">
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-5 lg:grid-rows-6">
 
                     {/* Buttons */}
-                    <div className="order-2 lg:order-1 col-span-1 lg:col-span-2 lg:row-span-4 w-full lg:w-[90%] mx-auto flex flex-col gap-3 md:text-xl text-dm">
+                    <div className="order-2 lg:order-1 col-span-1 lg:col-span-2 lg:row-span-3 w-full lg:w-[90%] mx-auto flex flex-col gap-3 md:text-xl text-dm">
 
                         {/* Register service button */}
                         <button
@@ -346,7 +430,7 @@ export default function AdminPanel() {
                     </div>
 
                     {/* Bar chart */}
-                    <div className="order-1 lg:order-2 col-span-1 lg:col-span-3 lg:row-span-4 lg:col-start-3 lg:row-start-1">
+                    <div className="order-1 lg:order-2 col-span-1 lg:col-span-3 lg:row-span-3 lg:col-start-3 lg:row-start-1 h-80">
                         <BarChart
                             dataset={chartData}
                             xAxis={[{ dataKey: 'day' }]}
@@ -358,8 +442,59 @@ export default function AdminPanel() {
                     </div>
 
                     {/* Services list */}
-                    <div className="col-span-1 lg:col-span-5 lg:row-span-3 lg:col-start-1 lg:row-start-5">
+                    <div className="order-3 lg:order-0 col-span-1 lg:col-span-5 lg:row-span-3 lg:col-start-1 lg:row-start-4 bg-white border border-neutral-300 rounded-xl p-4 h-full">
+                        <div className="flex items-center justify-between mb-3">
+                            <h3 className="text-lg font-semibold text-neutral-900">Registered services</h3>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setPopup('showServices')
+                                    void fetchPopupServicesPage(true)
+                                }}
+                                className="text-white bg-black rounded-md px-3 py-1 border border-neutral-700 cursor-pointer text-sm"
+                            >
+                                Show list
+                            </button>
+                        </div>
+                        <div className="grid grid-cols-5 gap-2 px-3 py-2 text-xs font-semibold text-neutral-600 border-b border-neutral-200">
+                            <p>Pet ID</p>
+                            <p>Pet type</p>
+                            <p>Date</p>
+                            <p>Service</p>
+                            <p className="text-right">Earn</p>
+                        </div>
 
+                        {sortedServices.length === 0 ? (
+                            <p className="text-neutral-500 py-6 text-center">No services registered yet.</p>
+                        ) : (
+                            <div className="max-h-58 overflow-y-auto">
+                                {sortedServices.map((serviceItem) => (
+                                    <div
+                                        key={`service-panel-${serviceItem.id}-${serviceItem.created_at}`}
+                                        className="grid grid-cols-2 lg:grid-cols-5 gap-2 px-3 py-3 border-b border-neutral-100 text-sm text-neutral-800"
+                                    >
+                                        <p>
+                                            {serviceItem.pet_id !== null && serviceItem.pet_id !== undefined
+                                                ? `#${serviceItem.pet_id}`
+                                                : 'N/A'}
+                                        </p>
+                                        <p className="capitalize">{serviceItem.animal_type}</p>
+                                        <p>
+                                            {new Intl.DateTimeFormat('en-US', {
+                                                month: 'short',
+                                                day: 'numeric',
+                                                year: 'numeric',
+                                                hour: 'numeric',
+                                                minute: '2-digit',
+                                                hour12: true,
+                                            }).format(new Date(serviceItem.created_at))}
+                                        </p>
+                                        <p className="capitalize">{serviceItem.service}</p>
+                                        <p className="text-right font-semibold">{currencyFormatter.format(serviceItem.earn ?? 0)}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
@@ -563,6 +698,77 @@ export default function AdminPanel() {
                                     )}
                                 </div>
                             </>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* Services list popup */}
+            {popup === 'showServices' && (
+                <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+                    <div className="w-full max-w-4xl bg-white border border-neutral-500 rounded-xl p-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-2xl font-bold text-black">Registered services</h3>
+                            <button
+                                type="button"
+                                onClick={() => setPopup('')}
+                                className="text-white bg-black rounded-md px-3 py-1 border border-red-500 cursor-pointer"
+                            >
+                                Close
+                            </button>
+                        </div>
+
+                        <div className="grid grid-cols-5 gap-2 px-3 py-2 text-xs font-semibold text-neutral-600 border-b border-neutral-200">
+                            <p>Pet ID</p>
+                            <p>Pet type</p>
+                            <p>Date</p>
+                            <p>Service</p>
+                            <p className="text-right">Earn</p>
+                        </div>
+
+                        {sortedPopupServices.length === 0 ? (
+                            popupServicesLoading ? (
+                                <p className="text-neutral-500 py-6 text-center">Loading services...</p>
+                            ) : (
+                                <p className="text-neutral-500 py-6 text-center">No services registered yet.</p>
+                            )
+                        ) : (
+                            <div className="max-h-[60vh] overflow-y-auto" onScroll={handlePopupServicesScroll}>
+                                {sortedPopupServices.map((serviceItem) => (
+                                    <div
+                                        key={`service-popup-${serviceItem.id}-${serviceItem.created_at}`}
+                                        className="grid grid-cols-2 lg:grid-cols-5 gap-2 px-3 py-3 border-b border-neutral-100 text-sm text-neutral-800"
+                                    >
+                                        <p>
+                                            {serviceItem.pet_id !== null && serviceItem.pet_id !== undefined
+                                                ? `#${serviceItem.pet_id}`
+                                                : 'N/A'}
+                                        </p>
+                                        <p className="capitalize">{serviceItem.animal_type}</p>
+                                        <p>
+                                            {new Intl.DateTimeFormat('en-US', {
+                                                month: 'short',
+                                                day: 'numeric',
+                                                year: 'numeric',
+                                                hour: 'numeric',
+                                                minute: '2-digit',
+                                                hour12: true,
+                                            }).format(new Date(serviceItem.created_at))}
+                                        </p>
+                                        <p className="capitalize">{serviceItem.service}</p>
+                                        <p className="text-right font-semibold">{currencyFormatter.format(serviceItem.earn ?? 0)}</p>
+                                    </div>
+                                ))}
+                                {popupServicesLoading && (
+                                    <p className="text-center text-xs text-neutral-500 py-3">Loading more services...</p>
+                                )}
+                                {!popupServicesHasMore && (
+                                    <p className="text-center text-xs text-neutral-500 py-3">End of list.</p>
+                                )}
+                                {popupServicesError && (
+                                    <p className="text-center text-xs text-red-600 py-3">{popupServicesError}</p>
+                                )}
+                            </div>
                         )}
                     </div>
                 </div>

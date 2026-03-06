@@ -3,8 +3,15 @@ import { createClient } from "@/lib/supabase/server";
 
 //Get all services rows related to user's pets 
 
-export async function GET() {
+export async function GET(req: Request) {
     const supabase = await createClient()
+    const { searchParams } = new URL(req.url)
+    const limitParam = searchParams.get('limit')
+    const offsetParam = searchParams.get('offset')
+    const parsedLimit = limitParam ? Number(limitParam) : null
+    const parsedOffset = offsetParam ? Number(offsetParam) : 0
+    const limit = parsedLimit !== null && Number.isFinite(parsedLimit) ? Math.min(Math.max(Math.floor(parsedLimit), 1), 100) : null
+    const offset = Number.isFinite(parsedOffset) ? Math.max(Math.floor(parsedOffset), 0) : 0
 
     //Get the user info
     const { data: { user }, error } = await supabase.auth.getUser()
@@ -18,9 +25,16 @@ export async function GET() {
     }
 
     //Get services rows from the database
-    const { data: services, error: servicesError } = await supabase
+    let servicesQuery = supabase
         .from('services')
         .select('*')
+        .order('created_at', { ascending: false })
+
+    if (limit !== null) {
+        servicesQuery = servicesQuery.range(offset, offset + limit - 1)
+    }
+
+    const { data: services, error: servicesError } = await servicesQuery
 
     if (servicesError) {
         return NextResponse.json(
