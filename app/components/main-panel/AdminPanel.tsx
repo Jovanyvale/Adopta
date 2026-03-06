@@ -7,32 +7,49 @@ import type { Schedule } from "@/app/types/schedule"
 import { BarChart } from '@mui/x-charts/BarChart';
 import SpotlightCard from "../SpotlightCard"
 
-type PopupState = '' | 'registerService' | 'appointments' | 'showServices'
+type PopupState = '' | 'registerService' | 'appointments' | 'showServices' | 'addAdoptionPet'
 const SERVICES_PAGE_SIZE = 20
 
 export default function AdminPanel() {
+    // Dashboard data
     const [servicesLast7Days, setServicesLast7Days] = useState<RegisteredService[]>([])
     const [services, setServices] = useState<RegisteredService[]>([])
-    const [popupServices, setPopupServices] = useState<RegisteredService[]>([])
-    const [popupServicesLoading, setPopupServicesLoading] = useState(false)
-    const [popupServicesHasMore, setPopupServicesHasMore] = useState(true)
-    const [popupServicesError, setPopupServicesError] = useState('')
+    const [now, setNow] = useState(new Date())
+
+    // Global popup state
     const [popup, setPopup] = useState<PopupState>('')
+
+    // "Register service" popup form state
     const [petId, setPetId] = useState('')
     const [petType, setPetType] = useState('other')
     const [service, setService] = useState('diagnostic')
     const [submitStatus, setSubmitStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
     const [submitMessage, setSubmitMessage] = useState('')
+
+    // "Show services" popup state (infinite scroll list)
+    const [popupServices, setPopupServices] = useState<RegisteredService[]>([])
+    const [popupServicesLoading, setPopupServicesLoading] = useState(false)
+    const [popupServicesHasMore, setPopupServicesHasMore] = useState(true)
+    const [popupServicesError, setPopupServicesError] = useState('')
+
+    // "Add adoption pet" popup form state
+    const [adoptionPetName, setAdoptionPetName] = useState('')
+    const [adoptionPetAnimalType, setAdoptionPetAnimalType] = useState('other')
+    const [adoptionPetImage, setAdoptionPetImage] = useState<File | null>(null)
+    const [adoptionPetSubmitStatus, setAdoptionPetSubmitStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
+    const [adoptionPetSubmitMessage, setAdoptionPetSubmitMessage] = useState('')
+
+    // "Appointments" popup state
     const [appointments, setAppointments] = useState<Schedule[]>([])
     const [appointmentsStatus, setAppointmentsStatus] = useState<'idle' | 'loading' | 'error'>('idle')
     const [appointmentsError, setAppointmentsError] = useState('')
-    const [now, setNow] = useState(new Date())
 
-    // refs
+    // Refs for "Show services" popup pagination control
     const popupServicesOffsetRef = useRef(0)
     const popupServicesLoadingRef = useRef(false)
     const popupServicesHasMoreRef = useRef(true)
 
+    // Derived dashboard/chart data
     const chartData = useMemo(() => {
         const formatter = new Intl.DateTimeFormat('en-US', { weekday: 'short' })
         const now = new Date()
@@ -216,6 +233,34 @@ export default function AdminPanel() {
             }
         }
         getServices()
+
+        async function preloadAppointments() {
+            try {
+                const res = await fetch('/api/db/getAllSchedules', {
+                    method: 'GET',
+                    credentials: 'include',
+                })
+
+                if (!res.ok) {
+                    throw new Error('Error getting appointments')
+                }
+
+                const data = await res.json()
+                const nowDate = new Date()
+                const orderedSchedules = data
+                    .filter((schedule: Schedule) => new Date(schedule.date) >= nowDate)
+                    .sort((a: Schedule, b: Schedule) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                    .map((schedule: Schedule) => ({
+                        ...schedule,
+                        date: new Date(schedule.date),
+                    }))
+
+                setAppointments(orderedSchedules)
+            } catch (err) {
+                console.log(err)
+            }
+        }
+        preloadAppointments()
     }, [])
 
     useEffect(() => {
@@ -281,6 +326,52 @@ export default function AdminPanel() {
                 setPopup('')
             }, 2500);
             console.log(err)
+        }
+    }
+
+    async function handleAdoptionPetSubmit(e: FormEvent<HTMLFormElement>) {
+        e.preventDefault()
+        if (adoptionPetSubmitStatus === 'loading') {
+            return
+        }
+
+        setAdoptionPetSubmitStatus('loading')
+        setAdoptionPetSubmitMessage('Saving adoption pet...')
+
+        try {
+            const formData = new FormData()
+            formData.append('name', adoptionPetName.trim())
+            formData.append('pet_type', adoptionPetAnimalType)
+            if (adoptionPetImage) {
+                formData.append('image', adoptionPetImage)
+            }
+
+            const res = await fetch('/api/db/postAdoptionPet', {
+                method: 'POST',
+                credentials: 'include',
+                body: formData,
+            })
+
+            if (!res.ok) {
+                const data = await res.json().catch(() => null)
+                throw new Error(data?.error ?? 'Could not save adoption pet.')
+            }
+
+            setAdoptionPetSubmitStatus('success')
+            setAdoptionPetSubmitMessage('Adoption pet saved successfully.')
+            setAdoptionPetName('')
+            setAdoptionPetAnimalType('other')
+            setAdoptionPetImage(null)
+
+            setTimeout(() => {
+                setPopup('')
+                setAdoptionPetSubmitStatus('idle')
+                setAdoptionPetSubmitMessage('')
+            }, 1500)
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Could not save adoption pet.'
+            setAdoptionPetSubmitStatus('error')
+            setAdoptionPetSubmitMessage(message)
         }
     }
 
@@ -377,12 +468,12 @@ export default function AdminPanel() {
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-5 lg:grid-rows-6">
 
                     {/* Buttons */}
-                    <div className="order-2 lg:order-1 col-span-1 lg:col-span-2 lg:row-span-3 w-full lg:w-[90%] mx-auto flex flex-col gap-3 md:text-xl text-dm">
+                    <div className="order-2 lg:order-1 col-span-1 lg:col-span-2 lg:row-span-3 w-full lg:w-[90%] mx-auto flex flex-col gap-2 md:text-xl text-dm">
 
                         {/* Register service button */}
                         <button
                             type="button"
-                            className="bg-neutral-100 border border-neutral-300 rounded-lg hover:cursor-pointer flex gap-4 px-6 p-4 w-full"
+                            className="bg-neutral-100 border border-neutral-300 rounded-lg hover:cursor-pointer flex gap-4 px-6 p-3 w-full"
                             onClick={() => {
                                 setPopup('registerService')
                                 setSubmitStatus('idle')
@@ -392,8 +483,8 @@ export default function AdminPanel() {
                             <div className="w-16 h-16 bg-blue-500 rounded-lg relative flex items-center justify-center">
                                 <Image src={'/icons/admin-panel/add-icon.svg'}
                                     alt="Register service icon"
-                                    width={50}
-                                    height={50}
+                                    width={40}
+                                    height={40}
                                 />
                             </div>
                             <p className="text-neutral-800 semibold self-center">Register service</p>
@@ -403,28 +494,54 @@ export default function AdminPanel() {
                         <button
                             type="button"
                             onClick={handleOpenAppointmentsPopup}
-                            className="bg-neutral-100 border border-neutral-300 rounded-lg hover:cursor-pointer flex gap-4 px-6 p-4 w-full"
+                            className="bg-neutral-100 border border-neutral-300 rounded-lg hover:cursor-pointer flex gap-4 px-6 p-3 w-full"
                         >
                             <div className="w-16 h-16 bg-red-500 rounded-lg relative flex items-center justify-center">
+                                {todayAppointments.length > 0 && (
+                                    <span className="absolute -top-1 -right-1 inline-flex h-3 w-3 rounded-full bg-red-500 animate-pulse shadow-[0_0_0_4px_rgba(239,68,68,0.2)]" />
+                                )}
                                 <Image src={'/icons/admin-panel/appointments-icon.svg'}
                                     alt="Register service icon"
-                                    width={50}
-                                    height={50}
+                                    width={40}
+                                    height={40}
                                 />
                             </div>
                             <p className="text-neutral-800 semibold self-center">Appointments</p>
                         </button>
 
-                        {/* Add adoption pet button */}
-                        <button className="bg-neutral-100 border border-neutral-300 rounded-lg hover:cursor-pointer flex gap-4 px-6 p-4 w-full">
-                            <div className="w-16 h-16 bg-black rounded-lg relative flex items-center justify-center">
+                        {/* Adoption pet management button */}
+                        <button
+                            type="button"
+                            className="bg-neutral-100 border border-neutral-300 rounded-lg hover:cursor-pointer flex gap-4 px-6 p-3 w-full"
+                            onClick={() => {
+                                setPopup('addAdoptionPet')
+                                setAdoptionPetSubmitStatus('idle')
+                                setAdoptionPetSubmitMessage('')
+                            }}
+                        >
+                            <div className="w-16 h-16 bg-green-600 rounded-lg relative flex items-center justify-center">
                                 <Image src={'/icons/admin-panel/pet-adoption-icon.svg'}
                                     alt="Register service icon"
-                                    width={50}
-                                    height={50}
+                                    width={40}
+                                    height={40}
                                 />
                             </div>
-                            <p className="text-neutral-800 semibold self-center">Add adoption pet</p>
+                            <p className="text-neutral-800 semibold self-center">Adoption pets management</p>
+                        </button>
+
+                        {/* Audit button */}
+                        <button
+                            type="button"
+                            className="bg-neutral-100 border border-neutral-300 rounded-lg hover:cursor-pointer flex gap-4 px-6 p-3 w-full"
+                        >
+                            <div className="w-16 h-16 bg-black rounded-lg relative flex items-center justify-center">
+                                <Image src={'/icons/admin-panel/audit-icon.svg'}
+                                    alt="Register service icon"
+                                    width={40}
+                                    height={40}
+                                />
+                            </div>
+                            <p className="text-neutral-800 semibold self-center">Audit</p>
                         </button>
 
                     </div>
@@ -623,7 +740,11 @@ export default function AdminPanel() {
                             <h3 className="text-2xl font-bold text-black">Appointments schedule</h3>
                             <button
                                 type="button"
-                                onClick={() => setPopup('')}
+                                onClick={() => {
+                                    setPopup('')
+                                    setAdoptionPetSubmitStatus('idle')
+                                    setAdoptionPetSubmitMessage('')
+                                }}
                                 className="text-white bg-black rounded-md px-3 py-1 border border-red-500 cursor-pointer"
                             >
                                 Close
@@ -770,6 +891,114 @@ export default function AdminPanel() {
                                 )}
                             </div>
                         )}
+                    </div>
+                </div>
+            )}
+
+            {/*adoption pet management popup */}
+            {popup === 'addAdoptionPet' && (
+                <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+                    <div className="w-full max-w-5xl bg-white border border-neutral-300 rounded-xl p-6">
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="text-2xl font-bold text-black">Adoption pets management</h3>
+                            <button
+                                type="button"
+                                onClick={() => setPopup('')}
+                                className="text-white bg-black rounded-md px-3 py-1 border border-red-500 cursor-pointer"
+                            >
+                                Close
+                            </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-120 max-h-140">
+                            <form onSubmit={handleAdoptionPetSubmit} className="border border-neutral-200 rounded-lg p-4 flex flex-col gap-4">
+                                <div className="flex flex-col gap-2">
+                                    <label htmlFor="adoptionPetImage" className="text-sm text-neutral-700">Photo (JPG)</label>
+                                    <div className="flex items-center gap-3">
+                                        <label
+                                            htmlFor="adoptionPetImage"
+                                            className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-neutral-100 text-neutral-800 cursor-pointer border border-neutral-300"
+                                        >
+                                            Choose image
+                                        </label>
+                                        <p className="text-sm text-neutral-500">
+                                            {adoptionPetImage ? adoptionPetImage.name : 'No file selected'}
+                                        </p>
+                                    </div>
+                                    <input
+                                        id="adoptionPetImage"
+                                        type="file"
+                                        accept=".jpg,.jpeg,image/jpeg"
+                                        onChange={(e) => setAdoptionPetImage(e.target.files?.[0] ?? null)}
+                                        className="hidden"
+                                    />
+                                </div>
+
+                                <div className="flex flex-col gap-2">
+                                    <label htmlFor="adoptionPetName" className="text-sm text-neutral-700">Name</label>
+                                    <input
+                                        id="adoptionPetName"
+                                        type="text"
+                                        required
+                                        value={adoptionPetName}
+                                        onChange={(e) => setAdoptionPetName(e.target.value)}
+                                        className="p-2 rounded-lg border border-neutral-300"
+                                        placeholder="Pet name"
+                                    />
+                                </div>
+
+                                <div className="flex flex-col gap-2">
+                                    <label htmlFor="adoptionPetAnimalType" className="text-sm text-neutral-700">Animal type</label>
+                                    <select
+                                        id="adoptionPetAnimalType"
+                                        value={adoptionPetAnimalType}
+                                        onChange={(e) => setAdoptionPetAnimalType(e.target.value)}
+                                        className="p-2 rounded-lg border border-neutral-300"
+                                    >
+                                        <option value="other">Other</option>
+                                        <option value="dog">Dog</option>
+                                        <option value="cat">Cat</option>
+                                        <option value="rabbit">Rabbit</option>
+                                        <option value="bird">Bird</option>
+                                        <option value="reptile">Reptile</option>
+                                        <option value="rodent">Rodent</option>
+                                    </select>
+                                </div>
+
+                                <div className="flex gap-3 mt-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setPopup('')
+                                            setAdoptionPetSubmitStatus('idle')
+                                            setAdoptionPetSubmitMessage('')
+                                        }}
+                                        className="w-full p-2 rounded-lg bg-neutral-200"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={adoptionPetSubmitStatus === 'loading'}
+                                        className="w-full p-2 rounded-lg bg-black text-white disabled:opacity-60"
+                                    >
+                                        Save
+                                    </button>
+                                </div>
+                                {adoptionPetSubmitStatus !== 'idle' && (
+                                    <p className={`text-sm ${adoptionPetSubmitStatus === 'error' ? 'text-red-600' : 'text-neutral-700'}`}>
+                                        {adoptionPetSubmitMessage}
+                                    </p>
+                                )}
+                            </form>
+
+                            <div className="border border-neutral-200 rounded-lg p-4">
+                                <h4 className="text-lg font-semibold text-neutral-900 mb-3">Adoption pets list</h4>
+                                <div className="rounded-lg border border-dashed border-neutral-300 p-6 text-center text-neutral-500">
+                                    Pets will appear here in the future.
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}
