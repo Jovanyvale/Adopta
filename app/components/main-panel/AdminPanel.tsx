@@ -9,6 +9,12 @@ import SpotlightCard from "../SpotlightCard"
 
 type PopupState = '' | 'registerService' | 'appointments' | 'showServices' | 'addAdoptionPet'
 const SERVICES_PAGE_SIZE = 20
+type AdoptionPet = {
+    id: number | string
+    name: string
+    pet_type: string | null
+    image: string | null
+}
 
 export default function AdminPanel() {
     // Dashboard data
@@ -38,6 +44,10 @@ export default function AdminPanel() {
     const [adoptionPetImage, setAdoptionPetImage] = useState<File | null>(null)
     const [adoptionPetSubmitStatus, setAdoptionPetSubmitStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
     const [adoptionPetSubmitMessage, setAdoptionPetSubmitMessage] = useState('')
+    const [adoptionPets, setAdoptionPets] = useState<AdoptionPet[]>([])
+    const [adoptionPetsLoading, setAdoptionPetsLoading] = useState(false)
+    const [adoptionPetsError, setAdoptionPetsError] = useState('')
+    const [deletingAdoptionPetId, setDeletingAdoptionPetId] = useState<number | string | null>(null)
 
     // "Appointments" popup state
     const [appointments, setAppointments] = useState<Schedule[]>([])
@@ -129,6 +139,16 @@ export default function AdminPanel() {
             : 0
 
         return `${servicesCount} services - ${currencyFormatter.format(earningsAmount)}`
+    }
+
+    function formatAdoptionPetType(type: string | null) {
+        if (!type) {
+            return 'Other'
+        }
+
+        return type
+            .replace(/_/g, ' ')
+            .replace(/\b\w/g, (char) => char.toUpperCase())
     }
 
     const fetchPopupServicesPage = useCallback(async (reset = false) => {
@@ -263,6 +283,37 @@ export default function AdminPanel() {
         preloadAppointments()
     }, [])
 
+    const fetchAdoptionPets = useCallback(async () => {
+        setAdoptionPetsLoading(true)
+        setAdoptionPetsError('')
+
+        try {
+            const res = await fetch('/api/db/getAdoptionPets', {
+                method: 'GET',
+                credentials: 'include',
+            })
+
+            if (!res.ok) {
+                throw new Error('Could not load adoption pets')
+            }
+
+            const data = await res.json() as AdoptionPet[]
+            setAdoptionPets(Array.isArray(data) ? data : [])
+        } catch (err) {
+            setAdoptionPets([])
+            setAdoptionPetsError('Could not load adoption pets.')
+            console.log(err)
+        } finally {
+            setAdoptionPetsLoading(false)
+        }
+    }, [])
+
+    useEffect(() => {
+        if (popup === 'addAdoptionPet') {
+            void fetchAdoptionPets()
+        }
+    }, [popup, fetchAdoptionPets])
+
     useEffect(() => {
         const intervalId = setInterval(() => {
             setNow(new Date())
@@ -362,9 +413,9 @@ export default function AdminPanel() {
             setAdoptionPetName('')
             setAdoptionPetAnimalType('other')
             setAdoptionPetImage(null)
+            await fetchAdoptionPets()
 
             setTimeout(() => {
-                setPopup('')
                 setAdoptionPetSubmitStatus('idle')
                 setAdoptionPetSubmitMessage('')
             }, 1500)
@@ -372,6 +423,40 @@ export default function AdminPanel() {
             const message = err instanceof Error ? err.message : 'Could not save adoption pet.'
             setAdoptionPetSubmitStatus('error')
             setAdoptionPetSubmitMessage(message)
+        }
+    }
+
+    async function handleDeleteAdoptionPet(adoptionPetId: number | string) {
+        if (deletingAdoptionPetId !== null) {
+            return
+        }
+
+        setDeletingAdoptionPetId(adoptionPetId)
+
+        try {
+            const res = await fetch('/api/db/deleteAdoptionPet', {
+                method: 'DELETE',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ adoptionPetId }),
+            })
+
+            if (!res.ok) {
+                const data = await res.json().catch(() => null)
+                throw new Error(data?.error ?? 'Could not delete adoption pet.')
+            }
+
+            setAdoptionPets((prev) => prev.filter((pet) => String(pet.id) !== String(adoptionPetId)))
+            setAdoptionPetSubmitStatus('success')
+            setAdoptionPetSubmitMessage('Adoption pet deleted successfully.')
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Could not delete adoption pet.'
+            setAdoptionPetSubmitStatus('error')
+            setAdoptionPetSubmitMessage(message)
+        } finally {
+            setDeletingAdoptionPetId(null)
         }
     }
 
@@ -517,6 +602,7 @@ export default function AdminPanel() {
                                 setPopup('addAdoptionPet')
                                 setAdoptionPetSubmitStatus('idle')
                                 setAdoptionPetSubmitMessage('')
+                                void fetchAdoptionPets()
                             }}
                         >
                             <div className="w-16 h-16 bg-green-600 rounded-lg relative flex items-center justify-center">
@@ -910,7 +996,7 @@ export default function AdminPanel() {
                             </button>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-120 max-h-140">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-130 max-h-140">
                             <form onSubmit={handleAdoptionPetSubmit} className="border border-neutral-200 rounded-lg p-4 flex flex-col gap-4">
                                 <div className="flex flex-col gap-2">
                                     <label htmlFor="adoptionPetImage" className="text-sm text-neutral-700">Photo (JPG)</label>
@@ -994,9 +1080,54 @@ export default function AdminPanel() {
 
                             <div className="border border-neutral-200 rounded-lg p-4">
                                 <h4 className="text-lg font-semibold text-neutral-900 mb-3">Adoption pets list</h4>
-                                <div className="rounded-lg border border-dashed border-neutral-300 p-6 text-center text-neutral-500">
-                                    Pets will appear here in the future.
-                                </div>
+                                {adoptionPetsLoading ? (
+                                    <div className="rounded-lg border border-dashed border-neutral-300 p-6 text-center text-neutral-500">
+                                        Loading adoption pets...
+                                    </div>
+                                ) : adoptionPetsError ? (
+                                    <div className="rounded-lg border border-dashed border-neutral-300 p-6 text-center text-red-600">
+                                        {adoptionPetsError}
+                                    </div>
+                                ) : adoptionPets.length === 0 ? (
+                                    <div className="rounded-lg border border-dashed border-neutral-300 p-6 text-center text-neutral-500">
+                                        No adoption pets registered yet.
+                                    </div>
+                                ) : (
+                                    <div className="max-h-110 overflow-y-auto pr-1 space-y-2">
+                                        {adoptionPets.map((pet) => {
+                                            const hasPetImage = typeof pet.image === 'string' && pet.image.trim().length > 0
+                                            const petImageSrc = hasPetImage ? pet.image : '/images/adoptions/cat-box.png'
+
+                                            return (
+                                                <div key={`adoption-pet-${pet.id}`} className="border border-neutral-200 rounded-lg p-3 flex items-center justify-between gap-3">
+                                                    <div className="flex items-center gap-3 min-w-0">
+                                                        <div className="relative w-14 h-14 rounded-md overflow-hidden bg-neutral-100 shrink-0">
+                                                            <Image
+                                                                src={petImageSrc}
+                                                                alt={pet.name}
+                                                                fill
+                                                                unoptimized
+                                                                className={hasPetImage ? 'object-cover' : 'object-contain p-1'}
+                                                            />
+                                                        </div>
+                                                        <div className="min-w-0">
+                                                            <p className="font-semibold text-neutral-900 truncate">{pet.name}</p>
+                                                            <p className="text-sm text-neutral-600">{formatAdoptionPetType(pet.pet_type)}</p>
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => void handleDeleteAdoptionPet(pet.id)}
+                                                        disabled={deletingAdoptionPetId === pet.id}
+                                                        className="px-3 py-2 rounded-lg bg-red-600 text-white text-sm disabled:opacity-60 hover:cursor-pointer"
+                                                    >
+                                                        {deletingAdoptionPetId === pet.id ? 'Deleting...' : 'Delete'}
+                                                    </button>
+                                                </div>
+                                            )
+                                        })}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>

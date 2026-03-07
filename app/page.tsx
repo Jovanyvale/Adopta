@@ -18,13 +18,45 @@ export default function Home() {
         </div>
 
         {/* Adoptions */}
-        <section className="flex flex-col adopt_section md:mt-50 mt-30 h-auto w-full mx-auto md:p-16 p-4 py-10 items-center justify-around gap-12 ">
-          <div className="text-center text-white text-shadow-lg">
-            <h2 className="md:text-5xl text-2xl font-semibold mb-5">Adopt a friend</h2>
-            <p className="md:text-2xl text-md md:max-w-240">Explore our complete catalog of pets ready for adoption and give a loving home to a new companion.</p>
+        <section className="md:mt-50 mt-30">
+          <div className="relative w-[92%] md:w-[90%] mx-auto overflow-hidden rounded-4xl bg-[#0f4f2a] px-5 md:px-12 py-10 md:py-14">
+            <div className="absolute -top-20 -left-10 h-56 w-56 rounded-full bg-[#36c667]/35 blur-2xl" />
+            <div className="absolute -bottom-24 right-10 h-64 w-64 rounded-full bg-[#95e3aa]/30 blur-3xl" />
+
+            <div className="relative z-10 grid lg:grid-cols-[1.05fr_0.95fr] gap-10 items-center">
+              <div className="text-white">
+                <p className="inline-block rounded-full bg-white/15 px-4 py-2 text-sm md:text-base font-medium mb-4">
+                  Find your new best friend
+                </p>
+                <h2 className="text-3xl md:text-5xl font-bold leading-tight">
+                  Adopt a pet and change two lives at once
+                </h2>
+                <p className="mt-4 text-base md:text-xl max-w-2xl text-white/90">
+                  Explore pets ready for adoption and connect with companions looking
+                  for a safe, loving home.
+                </p>
+
+                <Link
+                  href="/adoptions"
+                  className="inline-block mt-8 rounded-2xl bg-white px-7 py-3 text-lg font-semibold text-[#0f4f2a] hover:bg-[#ebf7ef] transition-colors"
+                >
+                  Go to Adoptions
+                </Link>
+              </div>
+
+              <div className="relative h-80 md:h-96">
+                <div className="absolute inset-0 rounded-[1.75rem] border border-white/25 bg-white/10" />
+                <div className="absolute inset-3 overflow-hidden rounded-3xl">
+                  <Image
+                    src="/images/adoption-section-image.jpg"
+                    fill
+                    alt="Pets for adoption"
+                    className="object-cover"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
-          <Link href='/adoptions' className="p-3 px-9 text-xl bg-white rounded-2xl text-black font-semibold">Adopt now</Link>
-          <img src="/images/adoption-section-image.jpg" alt="adoption dogs" className="rounded-xl md:w-140 w-full" />
         </section>
 
         {/* Ai Diagnostic */}
