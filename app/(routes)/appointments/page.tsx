@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic"
+
 'use client'
 import { Suspense, useEffect, useMemo, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -245,11 +247,11 @@ function AppointmentsContent() {
                                     onClick={() => setSelectedTime(slot)}
                                     disabled={isBlocked}
                                     className={`rounded-lg border p-3 text-center transition-colors disabled:opacity-45 disabled:cursor-not-allowed ${selectedTime === slot
-                                    ? "bg-black text-white border-black"
-                                    : isOccupied
-                                        ? "bg-red-500 text-white border-red-500"
-                                        : "bg-white border-neutral-300 hover:bg-neutral-200 hover:cursor-pointer"
-                                    }`}
+                                        ? "bg-black text-white border-black"
+                                        : isOccupied
+                                            ? "bg-red-500 text-white border-red-500"
+                                            : "bg-white border-neutral-300 hover:bg-neutral-200 hover:cursor-pointer"
+                                        }`}
                                 >
                                     {slot}
                                 </button>

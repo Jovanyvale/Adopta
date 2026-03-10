@@ -1,6 +1,6 @@
 'use client'
 import Link from "next/link"
-import { supabaseBrowser } from '@/lib/supabase/browser'
+import { browserClient } from '@/lib/supabase/browser'
 import { useState } from "react"
 import { redirect } from "next/navigation"
 
@@ -10,12 +10,12 @@ export default function LoginForm() {
     const [password, setPassword] = useState('')
     const [error, setError] = useState<string | null>(null)
 
-
+    const supabase = browserClient()
     async function handleLogin(e: React.FormEvent) {
         e.preventDefault();
         setError(null)
 
-        const { error } = await supabaseBrowser.auth.signInWithPassword({
+        const { error } = await supabase.auth.signInWithPassword({
             email,
             password,
         })
