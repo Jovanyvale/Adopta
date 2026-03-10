@@ -122,57 +122,68 @@ export default function UserPanel() {
     }
 
     return (
-        <div className="md:grid md:grid-cols-5 md:grid-rows-7 flex flex-col gap-4 w-[90%] mx-auto mt-16 font-semibold md:text-xl text-center">
-            {/* 1 — Welcome */}
-            < SpotlightCard className="col-span-5 row-span-2 md:text-5xl flex flex-col items-center justify-center p-10" >
-                <p>Welcome</p>
-                <p>{user?.profile.name}</p>
-            </SpotlightCard >
+        <div className="w-[92%] mx-auto mt-10 md:mt-14 font-semibold md:text-lg text-center">
+            <div className="relative overflow-hidden rounded-3xl border border-neutral-200 bg-[radial-gradient(80%_60%_at_50%_0%,#fde8e8_0%,#ffffff_60%)] p-6 md:p-10">
+                <div className="absolute -top-16 -right-20 h-48 w-48 rounded-full bg-red-200/50 blur-2xl" />
+                <div className="absolute -bottom-24 -left-16 h-56 w-56 rounded-full bg-amber-200/40 blur-2xl" />
+                <SpotlightCard className="relative z-10 flex flex-col items-center justify-center gap-2 bg-white/70 backdrop-blur md:text-5xl p-8 md:p-10">
+                    <p className="text-sm md:text-base uppercase tracking-[0.35em] text-neutral-500">Dashboard</p>
+                    <p>Welcome</p>
+                    <p className="text-red-600">{user?.profile.name}</p>
+                </SpotlightCard>
+            </div>
 
-            {/* 2 — Next appointment */}
-            < SpotlightCard className="col-span-3 row-span-5 row-start-3 flex flex-col gap-2 items-center justify-center bg-neutral-100" >
-                <p>Next appointment</p>
-                <p className="bg-red-500 text-white p-3 rounded-full">
-                    {schedules.length > 0
-                        ? new Intl.DateTimeFormat('en-US', {
-                            month: 'long',
-                            day: 'numeric',
-                            hour: 'numeric',
-                            minute: '2-digit',
-                            hour12: true,
-                        }).format(new Date(schedules[0].date))
-                        : "You don't have any appointments scheduled."
-                    }
-                </p>
-                <button
-                    type="button"
-                    onClick={() => setShowSchedulesPopup(true)}
-                    className="bg-white text-red-600 border border-red-500 rounded-lg px-4 py-2 hover:bg-red-600 hover:text-white transition-colors cursor-pointer"
-                >
-                    Upcoming schedules
-                </button>
-            </SpotlightCard >
+            <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-5 md:gap-6">
+                <SpotlightCard className="md:col-span-3 flex flex-col gap-4 items-center justify-center bg-neutral-50 border border-neutral-200 p-6 md:p-8">
+                    <div className="flex flex-col items-center gap-1">
+                        <p className="text-neutral-600 text-sm uppercase tracking-[0.25em]">Next appointment</p>
+                        <p className="bg-red-500 text-white px-4 py-2 rounded-full text-base md:text-lg">
+                            {schedules.length > 0
+                                ? new Intl.DateTimeFormat('en-US', {
+                                    month: 'long',
+                                    day: 'numeric',
+                                    hour: 'numeric',
+                                    minute: '2-digit',
+                                    hour12: true,
+                                }).format(new Date(schedules[0].date))
+                                : "You don't have any appointments scheduled."
+                            }
+                        </p>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => setShowSchedulesPopup(true)}
+                        className="bg-white text-red-600 border border-red-500 rounded-full px-5 py-2 hover:bg-red-600 hover:text-white transition-colors cursor-pointer"
+                    >
+                        Upcoming schedules
+                    </button>
+                </SpotlightCard>
 
-            {/* 4 — Last services */}
-            < SpotlightCard className="col-span-2 row-span-5 col-start-4 row-start-3 flex flex-col" >
-                <p>Last services</p>
-                <div className="flex flex-col justify-around h-full">
-                    {services.slice(0, 3).map(service => (
-                        <div
-                            key={service.id}
-                            className="flex flex-col bg-neutral-300 rounded-lg p-2"
-                        >
-                            <p>
-                                {service.service.charAt(0).toUpperCase() +
-                                    service.service.slice(1)}
-                            </p>
-                            <p className="text-md font-light">
-                                {new Date(service.created_at).toLocaleDateString()}
-                            </p>
-                        </div>
-                    ))}
-                </div>
-            </SpotlightCard >
+                <SpotlightCard className="md:col-span-2 flex flex-col gap-4 bg-white border border-neutral-200 p-6 md:p-8">
+                    <div className="flex items-center justify-between">
+                        <p className="text-neutral-600 text-sm uppercase tracking-[0.25em]">Last services</p>
+                        <span className="text-xs bg-neutral-100 border border-neutral-200 rounded-full px-3 py-1">
+                            {services.length} total
+                        </span>
+                    </div>
+                    <div className="flex flex-col gap-3">
+                        {services.slice(0, 3).map(service => (
+                            <div
+                                key={service.id}
+                                className="flex items-center justify-between gap-2 rounded-xl bg-neutral-100 px-4 py-3"
+                            >
+                                <p className="text-sm md:text-base">
+                                    {service.service.charAt(0).toUpperCase() +
+                                        service.service.slice(1)}
+                                </p>
+                                <p className="text-xs md:text-sm text-neutral-600">
+                                    {new Date(service.created_at).toLocaleDateString()}
+                                </p>
+                            </div>
+                        ))}
+                    </div>
+                </SpotlightCard>
+            </div>
 
             {showSchedulesPopup && (
                 <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">

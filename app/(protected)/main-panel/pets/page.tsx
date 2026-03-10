@@ -47,7 +47,7 @@ export default function Profile() {
                 setLoading(false)
 
             } catch (err) {
-                setError(error)
+                setError(err instanceof Error ? err.message : 'Unexpected error')
             }
 
         }
@@ -190,7 +190,7 @@ export default function Profile() {
         <>
             {/* PopUps management */}
             {popup == 'addPet' &&
-                < PetInfoPopUp
+                <PetInfoPopUp
                     onClose={() => setPopup('')}
                 />
             }
@@ -218,105 +218,103 @@ export default function Profile() {
                 />
             }
 
-            {/* Page content */}
-            <div className="w-[90%] mx-auto mt-12 
-                flex flex-col gap-4
-                lg:grid lg:grid-cols-5 lg:grid-rows-5 lg:gap-4">
-
-                {/* Title */}
-                <div className="bg-blue-200 rounded-2xl flex items-center justify-center p-4
-                    lg:col-span-4 lg:justify-items-center lg:place-content-center">
-                    <p className="lg:text-3xl">My pets</p>
-                </div>
-
-                {/* Schedule div */}
-                <div className="bg-neutral-100 rounded-2xl p-4
-                    lg:row-span-3 lg:col-start-5 lg:row-start-1">
-                    <SpotlightCard className="col-span-3 row-span-4 row-start-3 flex flex-col gap-2 items-center justify-center bg-neutral-100 h-full border-0">
-                        <p>Next appointment</p>
-                        <p className="bg-red-500 text-white p-3 rounded-md text-center text-sm">
-                            {schedules.length > 0
-                                ? new Intl.DateTimeFormat('en-US', {
-                                    month: 'long',
-                                    day: 'numeric',
-                                    hour: 'numeric',
-                                    minute: '2-digit',
-                                    hour12: true,
-                                }).format(new Date(schedules[0].date))
-                                : "You don't have any appointments scheduled."
-                            }
-                        </p>
-                        {schedules.length > 0 &&
-                            < p className="truncate text-white text-center p-2 bg-neutral-700 rounded-md text-sm">
-                                Pet: {nextAppointmentPetName ?? 'Unknown pet'}
-                            </p>
-                        }
-
-                        {schedules.length > 0 && (
-                            <button
-                                type="button"
-                                onClick={handleDeleteAppointment}
-                                disabled={deletingAppointment}
-                                className="p-3 text-sm bg-red-600 rounded-2xl text-white hover:cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
-                            >
-                                {deletingAppointment ? 'Deleting...' : 'Delete next appointment'}
-                            </button>
-                        )}
-                        {appointmentActionMessage && (
-                            <p className="text-xs text-center text-neutral-700">{appointmentActionMessage}</p>
-                        )}
-                    </SpotlightCard>
-                </div>
-
-                {/* See all pets button */}
-                <div className="lg:row-span-2 lg:col-start-5 lg:row-start-4">
-                    <button className="h-full w-full flex items-center justify-center flex-col p-6 
-                           bg-neutral-100 rounded-2xl border border-neutral-300
-                           hover:cursor-pointer text-lg hover:bg-amber-100 duration-550"
-                        onClick={() => setPopup('pets')}>
-                        See your pets
-                    </button>
-                </div>
-
-                {/* Pets div */}
-                <div className="grid grid-cols-1 gap-4 justify-items-center
-                    lg:col-span-4 lg:row-span-4 lg:col-start-1 md:mb-0 mb-10 lg:row-start-2
-                    lg:grid-cols-4">
-                    {petsWithServices.slice(0, 3).map((pet) => (
-                        <PetCard
-                            key={pet.id}
-                            petId={pet.id}
-                            petName={pet.name}
-                            petType={pet.type}
-                            lastService={
-                                pet.services.length < 1
-                                    ? 'No services yet'
-                                    : pet.services[0].service
-                            }
-                            lastServiceDate={
-                                pet.services.length < 1
-                                    ? ''
-                                    : pet.last_treatment
-                            }
-                            editPet={(petId) => {
-                                setEditingPet(petId)
-                                setPopup('petEdit')
-                            }}
-                        />
-                    ))}
-
-                    <div
-                        className="flex items-center justify-center flex-col p-6 w-full h-full
-                       bg-neutral-100 rounded-2xl border border-neutral-300
-                       hover:cursor-pointer"
-                        onClick={() => setPopup('addPet')}
-                    >
-
-                        <p className="text-3xl ">+</p>
-                        <p className="text-xl p-2 bg-blue-300 rounded-full">Add a pet</p>
+            <div className="w-[92%] mx-auto mt-10 md:mt-14 flex flex-col gap-6">
+                <div className="relative overflow-hidden rounded-3xl border border-neutral-200 p-6 md:p-10">
+                    <div className="relative z-10 flex flex-col gap-2 items-center text-center">
+                        <p className="text-sm uppercase tracking-[0.35em] text-neutral-500">Control center</p>
+                        <h1 className="text-3xl md:text-5xl">My pets</h1>
                     </div>
                 </div>
-            </div >
+
+                <div className="grid grid-cols-1 lg:grid-cols-6 gap-6">
+                    <div className="lg:col-span-4 flex flex-col gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <button
+                                className="h-full w-full flex items-center justify-center flex-col gap-1 p-6 bg-white rounded-2xl border border-neutral-200 hover:cursor-pointer hover:bg-amber-50 transition-colors"
+                                onClick={() => setPopup('pets')}
+                            >
+                                <p className="text-xs uppercase tracking-[0.3em] text-neutral-500">Overview</p>
+                                <p className="text-lg">See your pets</p>
+                            </button>
+
+                            <button
+                                className="h-full w-full flex items-center justify-center flex-col gap-1 p-6 bg-white rounded-2xl border border-neutral-200 hover:cursor-pointer hover:bg-blue-50 transition-colors"
+                                onClick={() => setPopup('addPet')}
+                            >
+                                <p className="text-xs uppercase tracking-[0.3em] text-neutral-500">Quick add</p>
+                                <p className="text-lg">Add a pet</p>
+                            </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {petsWithServices.slice(0, 3).map((pet) => (
+                                <PetCard
+                                    key={pet.id}
+                                    petId={pet.id}
+                                    petName={pet.name}
+                                    petType={pet.type}
+                                    lastService={
+                                        pet.services.length < 1
+                                            ? 'No services yet'
+                                            : pet.services[0].service
+                                    }
+                                    lastServiceDate={
+                                        pet.services.length < 1
+                                            ? ''
+                                            : pet.last_treatment
+                                    }
+                                    editPet={(petId) => {
+                                        setEditingPet(petId)
+                                        setPopup('petEdit')
+                                    }}
+                                />
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="lg:col-span-2">
+                        <SpotlightCard className="h-full flex flex-col gap-4 bg-white border border-neutral-200 p-6">
+                            <div className="flex items-center justify-between">
+                                <p className="text-neutral-600 text-sm uppercase tracking-[0.25em]">Next appointment</p>
+                                <span className="text-xs bg-neutral-100 border border-neutral-200 rounded-full px-3 py-1">
+                                    {schedules.length} upcoming
+                                </span>
+                            </div>
+                            <p className="bg-red-500 text-white p-3 rounded-md text-center text-sm md:text-base">
+                                {schedules.length > 0
+                                    ? new Intl.DateTimeFormat('en-US', {
+                                        month: 'long',
+                                        day: 'numeric',
+                                        hour: 'numeric',
+                                        minute: '2-digit',
+                                        hour12: true,
+                                    }).format(new Date(schedules[0].date))
+                                    : "You don't have any appointments scheduled."
+                                }
+                            </p>
+                            {schedules.length > 0 &&
+                                <p className="truncate text-white text-center p-2 bg-neutral-700 rounded-md text-sm">
+                                    Pet: {nextAppointmentPetName ?? 'Unknown pet'}
+                                </p>
+                            }
+
+                            {schedules.length > 0 && (
+                                <button
+                                    type="button"
+                                    onClick={handleDeleteAppointment}
+                                    disabled={deletingAppointment}
+                                    className="p-3 text-sm bg-red-600 rounded-2xl text-white hover:cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                                >
+                                    {deletingAppointment ? 'Deleting...' : 'Delete next appointment'}
+                                </button>
+                            )}
+                            {appointmentActionMessage && (
+                                <p className="text-xs text-center text-neutral-700">{appointmentActionMessage}</p>
+                            )}
+                        </SpotlightCard>
+                    </div>
+                </div>
+            </div>
         </>
     )
 }
