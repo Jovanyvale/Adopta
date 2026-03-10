@@ -2,7 +2,6 @@
 import Link from "next/link"
 import { supabaseBrowser } from '@/lib/supabase/browser'
 import { useState } from "react"
-import DemoMessage from "@/app/components/DemoMessage"
 import { redirect } from "next/navigation"
 
 export default function LoginForm() {
@@ -31,8 +30,6 @@ export default function LoginForm() {
 
     return (
         <div>
-            <DemoMessage />
-
             < div className="flex flex-col mx-auto mt-20 items-center md:w-190 w-[90%] bg-neutral-200 shadow-md p-8 rounded-2xl" >
                 <h1 className="font-bold text-4xl">Adopta</h1>
                 <p className="text-xl mt-1">Login form</p>

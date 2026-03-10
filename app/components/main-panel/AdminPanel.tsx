@@ -323,47 +323,48 @@ export default function AdminPanel() {
         }
     }
 
+    const fetchServicesLast7Days = useCallback(async () => {
+        try {
+            const res = await fetch('/api/db/getServices/getLast7DaysServices', {
+                method: 'GET',
+                credentials: 'include',
+            })
+
+            if (!res.ok) {
+                throw new Error('Error getting last 7 days services')
+            }
+
+            const data = await res.json()
+            setServicesLast7Days(data)
+        } catch (err) {
+            console.log(err)
+        }
+    }, [])
+
+    const fetchServices = useCallback(async () => {
+        try {
+            const res = await fetch('/api/db/getServices', {
+                method: 'GET',
+                credentials: 'include',
+            })
+
+            if (!res.ok) {
+                throw new Error('Error services')
+            }
+
+            const data = await res.json() as RegisteredService[]
+            const uniqueServices = data.filter((item, index, array) =>
+                index === array.findIndex((current) => current.id === item.id)
+            )
+            setServices(uniqueServices)
+        } catch (err) {
+            console.log(err)
+        }
+    }, [])
+
     useEffect(() => {
-        async function getLast7DaysServices() {
-            try {
-                const res = await fetch('/api/db/getServices/getLast7DaysServices', {
-                    method: 'GET',
-                    credentials: 'include',
-                })
-
-                if (!res.ok) {
-                    throw new Error('Error getting last 7 days services')
-                }
-
-                const data = await res.json()
-                setServicesLast7Days(data)
-            } catch (err) {
-                console.log(err)
-            }
-        }
-        getLast7DaysServices()
-
-        async function getServices() {
-            try {
-                const res = await fetch('/api/db/getServices', {
-                    method: 'GET',
-                    credentials: 'include',
-                })
-
-                if (!res.ok) {
-                    throw new Error('Error services')
-                }
-
-                const data = await res.json() as RegisteredService[]
-                const uniqueServices = data.filter((item, index, array) =>
-                    index === array.findIndex((current) => current.id === item.id)
-                )
-                setServices(uniqueServices)
-            } catch (err) {
-                console.log(err)
-            }
-        }
-        getServices()
+        void fetchServicesLast7Days()
+        void fetchServices()
 
         async function preloadAppointments() {
             try {
@@ -392,7 +393,7 @@ export default function AdminPanel() {
             }
         }
         preloadAppointments()
-    }, [])
+    }, [fetchServicesLast7Days, fetchServices])
 
     const fetchAdoptionPets = useCallback(async () => {
         setAdoptionPetsLoading(true)
@@ -471,6 +472,8 @@ export default function AdminPanel() {
             setService('diagnostic')
             setSubmitStatus('success')
             setSubmitMessage('Service submitted successfully.')
+            await fetchServicesLast7Days()
+            await fetchServices()
 
             setTimeout(() => {
                 setSubmitStatus('idle')
@@ -818,6 +821,17 @@ export default function AdminPanel() {
                             </div>
                         )}
                     </div>
+                </div>
+
+                <div className="mt-8 flex justify-end pb-10">
+                    <form action="/auth/logout" method="post">
+                        <button
+                            type="submit"
+                            className="px-6 py-3 rounded-lg bg-black text-white hover:cursor-pointer"
+                        >
+                            Logout
+                        </button>
+                    </form>
                 </div>
             </div>
 
