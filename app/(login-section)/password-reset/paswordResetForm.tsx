@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { supabaseBrowser } from '@/lib/supabase/browser'
+import { browserClient } from '@/lib/supabase/browser'
 import { redirect } from 'next/navigation'
 
 export default function PasswordResetForm() {
@@ -10,8 +10,9 @@ export default function PasswordResetForm() {
 
     async function handleUpdate(e: React.FormEvent) {
         e.preventDefault()
+        const supabase = browserClient()
 
-        const { error } = await supabaseBrowser.auth.updateUser({
+        const { error } = await supabase.auth.updateUser({
             password,
         })
 

@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { supabaseBrowser } from '@/lib/supabase/browser'
+import { browserClient } from '@/lib/supabase/browser'
 
 export default function RegisterForm() {
     const [name, setName] = useState('')
@@ -11,7 +11,9 @@ export default function RegisterForm() {
 
     async function handleRegister(e: React.FormEvent) {
         e.preventDefault()
-        const { data, error } = await supabaseBrowser.auth.signUp({
+        const supabase = browserClient()
+
+        const { data, error } = await supabase.auth.signUp({
             email,
             password,
             options: {
@@ -28,7 +30,7 @@ export default function RegisterForm() {
             return
         }
 
-        await supabaseBrowser.from('profiles').insert({
+        await supabase.from('profiles').insert({
             id: data.user?.id,
             name,
             lastname: lastName,

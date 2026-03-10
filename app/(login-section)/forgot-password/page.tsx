@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { supabaseBrowser } from '@/lib/supabase/browser'
+import { browserClient } from '@/lib/supabase/browser'
 
 export default function ForgotPassword() {
     const [email, setEmail] = useState('')
@@ -9,8 +9,9 @@ export default function ForgotPassword() {
 
     async function handleReset(e: React.FormEvent) {
         e.preventDefault()
+        const supabase = browserClient()
 
-        const { error } = await supabaseBrowser.auth.resetPasswordForEmail(
+        const { error } = await supabase.auth.resetPasswordForEmail(
             email,
             {
                 redirectTo: 'http://localhost:3000/reset-password',
