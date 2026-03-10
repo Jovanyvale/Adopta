@@ -1,6 +1,5 @@
 import { FormEvent, useEffect, useState } from "react"
 import type { ApiGetUser } from "@/app/types/apiGetUser"
-import { error } from "console"
 import Image from "next/image"
 
 type PetInfoPopUpProps = {
