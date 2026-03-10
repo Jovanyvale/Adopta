@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
+import { useSearchParams } from "next/navigation"
 
 type SubmitStatus = "idle" | "loading" | "success" | "error"
 
@@ -32,13 +33,7 @@ function getYmdDate(date: Date) {
     )}-${String(date.getDate()).padStart(2, "0")}`
 }
 
-export default function AppointmentsClient({
-    petId,
-    petType,
-}: {
-    petId: string | null
-    petType: string | null
-}) {
+export default function AppointmentsClient() {
     const router = useRouter()
 
     const today = useMemo(() => getYmdDate(new Date()), [])
@@ -196,8 +191,12 @@ export default function AppointmentsClient({
         }
     }
 
-    const hasPetParams = Boolean(petId && petType)
+    const searchParams = useSearchParams()
+    const petId = searchParams.get('petId')
+    const petType = searchParams.get('petType')
 
+    const hasPetParams = Boolean(petId && petType)
+    
     return (
         <div className="w-[92%] max-w-4xl mx-auto mt-10 mb-16">
             <div className="rounded-2xl bg-neutral-100 border border-neutral-300 p-6 md:p-8">
