@@ -1,16 +1,15 @@
 'use client'
+
 import { useEffect, useMemo, useState } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter } from "next/navigation"
 
 type SubmitStatus = "idle" | "loading" | "success" | "error"
 
 function buildTimeSlots() {
     const slots: string[] = []
-    for (let hour = 10; hour <= 17; hour += 1) {
+    for (let hour = 10; hour <= 17; hour++) {
         for (const minute of [0, 30]) {
-            if (hour === 17 && minute === 30) {
-                continue
-            }
+            if (hour === 17 && minute === 30) continue
 
             const hh = String(hour).padStart(2, "0")
             const mm = String(minute).padStart(2, "0")
@@ -27,15 +26,20 @@ function getDateAtTime(dateValue: string, timeValue: string) {
 }
 
 function getYmdDate(date: Date) {
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
+        2,
+        "0"
+    )}-${String(date.getDate()).padStart(2, "0")}`
 }
 
-export default function AppointmentsClient() {
+export default function AppointmentsClient({
+    petId,
+    petType,
+}: {
+    petId: string | null
+    petType: string | null
+}) {
     const router = useRouter()
-    const searchParams = useSearchParams()
-
-    const petId = searchParams.get("petId")
-    const petType = searchParams.get("petType")
 
     const today = useMemo(() => getYmdDate(new Date()), [])
     const maxDate = useMemo(() => {
@@ -54,17 +58,21 @@ export default function AppointmentsClient() {
 
     const timeSlots = useMemo(() => buildTimeSlots(), [])
     const now = new Date()
+
     const occupiedSlots = useMemo(() => {
         const slots = new Set<string>()
+
         for (const schedule of allSchedules) {
             const scheduleDate = new Date(schedule.date)
-            if (getYmdDate(scheduleDate) !== selectedDate) {
-                continue
-            }
+
+            if (getYmdDate(scheduleDate) !== selectedDate) continue
+
             const hh = String(scheduleDate.getHours()).padStart(2, "0")
             const mm = String(scheduleDate.getMinutes()).padStart(2, "0")
+
             slots.add(`${hh}:${mm}`)
         }
+
         return slots
     }, [allSchedules, selectedDate])
 
@@ -89,7 +97,12 @@ export default function AppointmentsClient() {
 
                 if (userSchedulesRes.ok) {
                     const data = await userSchedulesRes.json()
-                    const hasActive = data.some((schedule: { date: string }) => new Date(schedule.date) >= new Date())
+
+                    const hasActive = data.some(
+                        (schedule: { date: string }) =>
+                            new Date(schedule.date) >= new Date()
+                    )
+
                     setHasActiveUserSchedule(hasActive)
                 }
             } catch (error) {
@@ -101,9 +114,8 @@ export default function AppointmentsClient() {
     }, [])
 
     useEffect(() => {
-        if (!selectedTime) {
-            return
-        }
+        if (!selectedTime) return
+
         if (occupiedSlots.has(selectedTime)) {
             setSelectedTime(null)
         }
@@ -115,11 +127,15 @@ export default function AppointmentsClient() {
             setSubmitMessage("Missing pet information or selected slot.")
             return
         }
+
         if (hasActiveUserSchedule) {
             setSubmitStatus("error")
-            setSubmitMessage("You already have an active appointment and cannot schedule another one yet.")
+            setSubmitMessage(
+                "You already have an active appointment and cannot schedule another one yet."
+            )
             return
         }
+
         if (occupiedSlots.has(selectedTime)) {
             setSubmitStatus("error")
             setSubmitMessage("This time slot is already occupied.")
@@ -130,6 +146,7 @@ export default function AppointmentsClient() {
 
         const startOfToday = new Date()
         startOfToday.setHours(0, 0, 0, 0)
+
         const endLimitDate = new Date()
         endLimitDate.setHours(23, 59, 59, 999)
         endLimitDate.setDate(endLimitDate.getDate() + 3)
@@ -139,14 +156,16 @@ export default function AppointmentsClient() {
             setSubmitMessage("You cannot create appointments in the past.")
             return
         }
+
         if (scheduleDate < startOfToday || scheduleDate > endLimitDate) {
             setSubmitStatus("error")
-            setSubmitMessage("Appointments can only be scheduled from today to 3 days ahead.")
+            setSubmitMessage(
+                "Appointments can only be scheduled from today to 3 days ahead."
+            )
             return
         }
 
         setSubmitStatus("loading")
-        setSubmitMessage("")
 
         try {
             const res = await fetch("/api/db/postSchedule", {
@@ -162,17 +181,16 @@ export default function AppointmentsClient() {
                 }),
             })
 
-            if (!res.ok) {
-                throw new Error("Error creating appointment")
-            }
+            if (!res.ok) throw new Error()
 
             setSubmitStatus("success")
             setSubmitMessage("Appointment created successfully.")
             setShowConfirm(false)
+
             setTimeout(() => {
                 router.push("/main-panel/pets")
             }, 1200)
-        } catch (error) {
+        } catch {
             setSubmitStatus("error")
             setSubmitMessage("Could not create appointment. Please try again.")
         }

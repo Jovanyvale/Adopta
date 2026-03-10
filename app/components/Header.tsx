@@ -2,8 +2,9 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { supabaseBrowser } from "@/lib/supabase/browser";
+import { browserClient } from "@/lib/supabase/browser";
 import { useEffect, useState } from "react";
+import { AuthChangeEvent, Session } from "@supabase/supabase-js"
 
 export default function Header() {
 
@@ -12,6 +13,8 @@ export default function Header() {
     const [open, setOpen] = useState(false)
     const pathName = usePathname();
 
+    const supabase = browserClient()
+
     //When click on a link closes the menu
     const closeMenu = () => {
         setOpen(false)
@@ -19,7 +22,7 @@ export default function Header() {
 
     //Verfiy if there is a loged user when the page loads
     useEffect(() => {
-        supabaseBrowser.auth.onAuthStateChange((_event, session) => {
+        supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
             setIsLogedIn(!!session?.user);
         });
     }, []);

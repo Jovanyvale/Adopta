@@ -17,7 +17,7 @@ export const services: Service[] = [
     },
     {
         title: "Micro Chip",
-        description: "Lorem ipsum, dolor sit amet consectetur adipisicing elit. Iste consequatur molestias architecto nobis et, ducimus recusandae, iusto nemo cupiditate quisquam esse ab temporibus quasi minima modi tenetur nostrum sapiente odit.",
+        description: "A microchip is a small electronic device implanted under your pet’s skin that stores a unique identification number. If your pet gets lost, veterinarians and shelters can scan the chip and quickly access your contact information, increasing the chances of a safe return. The procedure is fast, safe, and does not require surgery.",
         image: "micro-chip.jpg",
         url: "/",
         buttonText: "More info"
