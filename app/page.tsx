@@ -73,11 +73,11 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Grooming section */}
+        {/* Appointment section */}
         <section>
           <div className="flex flex-col items-center w-full mx-auto md:mt-70 mt-40 gap-10 bg-red-300 md:px-20 px-6 pt-20 pb-50 text-white text-center">
             <h2 className="md:text-4xl text-2xl font-bold text-shadow-lg">Pets appointments</h2>
-            <p className="md:text-2xl text-lg text-center max-w-260 font-semibold text-shadow-lg">Lorem ipsum dolor sit amet consectetur adipisicing elit. Ab accusamus, eligendi eum nemo quos officia? Nisi sequi itaque, exercitationem eos labore hic. At magnam, consequatur ab ut pariatur odio error.</p>
+            <p className="md:text-2xl text-lg text-center max-w-260 font-semibold text-shadow-lg">Book your pet&apos;s next visit in minutes. Pick a date, stay on top of checkups, and keep every appointment organized in one place.</p>
             <Link href={'/main-panel/pets'} className="bg-black p-4 md:text-xl text-md font-semibold rounded-lg">Schedule an appointment</Link>
           </div>
           <div className="justify-center relative md:h-125 h-90 w-auto mt-[-150]">

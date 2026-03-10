@@ -22,6 +22,7 @@ const lexend = Lexend(
 export default async function RootLayout({ children, }: Readonly<{ children: React.ReactNode; }>) {
 
   //Get the current use loged in
+  const currentYear = new Date().getFullYear()
 
   return (
     <html lang="en">
@@ -29,7 +30,12 @@ export default async function RootLayout({ children, }: Readonly<{ children: Rea
         <AuthProvider>
           <div className='min-h-screen flex flex-col'>
             <Header />
-            {children}
+            <main className="flex-1">
+              {children}
+            </main>
+            <footer className="border-t border-neutral-300 bg-neutral-100 px-6 py-4 text-center text-sm text-neutral-700">
+              <p>&copy; {currentYear} Adopta. Created by <a className="text-blue-800 hover:cursor-pointer" href="https://github.com/Jovanyvale">Jovany Valenzuela</a></p>
+            </footer>
           </div>
         </AuthProvider>
       </body>

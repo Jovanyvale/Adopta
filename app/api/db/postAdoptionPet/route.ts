@@ -97,6 +97,27 @@ export async function POST(req: Request) {
             )
         }
 
+        const historyUrl = new URL('/api/db/postHistory', req.url)
+        const postHistoryRes = await fetch(historyUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                cookie: req.headers.get('cookie') ?? ''
+            },
+            body: JSON.stringify({
+                on_table: 'Adoptions',
+                details: `Added pet: ${inserted.name} #${inserted.id}`
+            })
+        })
+
+        if (!postHistoryRes.ok) {
+            const data = await postHistoryRes.json().catch(() => null)
+            return NextResponse.json(
+                { error: data?.error ?? 'Unable to register audit history' },
+                { status: postHistoryRes.status }
+            )
+        }
+
         return NextResponse.json(
             { success: true, adoption: inserted },
             { status: 201 }

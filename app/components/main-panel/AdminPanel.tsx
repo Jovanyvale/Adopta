@@ -2,13 +2,15 @@
 import Image from "next/image"
 import { UIEvent, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import type { ChangeEvent, FormEvent } from "react"
+import type { HistoryRecord } from "@/app/types/historyRecord"
 import type { RegisteredService } from "@/app/types/registeredServices"
 import type { Schedule } from "@/app/types/schedule"
 import { BarChart } from '@mui/x-charts/BarChart';
 import SpotlightCard from "../SpotlightCard"
 
-type PopupState = '' | 'registerService' | 'appointments' | 'showServices' | 'addAdoptionPet'
+type PopupState = '' | 'registerService' | 'appointments' | 'showServices' | 'addAdoptionPet' | 'auditHistory'
 const SERVICES_PAGE_SIZE = 20
+const AUDIT_HISTORY_PAGE_SIZE = 20
 type AdoptionPet = {
     id: number | string
     name: string
@@ -38,6 +40,14 @@ export default function AdminPanel() {
     const [popupServicesHasMore, setPopupServicesHasMore] = useState(true)
     const [popupServicesError, setPopupServicesError] = useState('')
 
+    // "Audit history" popup state (infinite scroll list)
+    const [auditHistory, setAuditHistory] = useState<HistoryRecord[]>([])
+    const [auditHistoryLoading, setAuditHistoryLoading] = useState(false)
+    const [auditHistoryHasMore, setAuditHistoryHasMore] = useState(true)
+    const [auditHistoryError, setAuditHistoryError] = useState('')
+    const [auditTableFilter, setAuditTableFilter] = useState('all')
+    const [auditAdminSearch, setAuditAdminSearch] = useState('')
+
     // "Add adoption pet" popup form state
     const [adoptionPetName, setAdoptionPetName] = useState('')
     const [adoptionPetAnimalType, setAdoptionPetAnimalType] = useState('other')
@@ -58,6 +68,9 @@ export default function AdminPanel() {
     const popupServicesOffsetRef = useRef(0)
     const popupServicesLoadingRef = useRef(false)
     const popupServicesHasMoreRef = useRef(true)
+    const auditHistoryOffsetRef = useRef(0)
+    const auditHistoryLoadingRef = useRef(false)
+    const auditHistoryHasMoreRef = useRef(true)
 
     // Derived dashboard/chart data
     const chartData = useMemo(() => {
@@ -123,6 +136,42 @@ export default function AdminPanel() {
     const sortedPopupServices = useMemo(() => {
         return [...popupServices].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     }, [popupServices])
+
+    const sortedAuditHistory = useMemo(() => {
+        return [...auditHistory].sort((a, b) => {
+            const dateA = a.created_at ? new Date(a.created_at).getTime() : 0
+            const dateB = b.created_at ? new Date(b.created_at).getTime() : 0
+            return dateB - dateA
+        })
+    }, [auditHistory])
+
+    const auditTableOptions = useMemo(() => {
+        const uniqueTables = Array.from(
+            new Set(
+                auditHistory
+                    .map((item) => item.on_table?.trim())
+                    .filter((table): table is string => Boolean(table))
+            )
+        ).sort((a, b) => a.localeCompare(b))
+
+        return ['all', ...uniqueTables]
+    }, [auditHistory])
+
+    const filteredAuditHistory = useMemo(() => {
+        const normalizedAdminSearch = auditAdminSearch.trim().toLowerCase()
+
+        return sortedAuditHistory.filter((item) => {
+            const matchesTable =
+                auditTableFilter === 'all' ||
+                (item.on_table?.trim().toLowerCase() ?? '') === auditTableFilter.toLowerCase()
+
+            const matchesAdmin =
+                normalizedAdminSearch.length === 0 ||
+                (item.admin?.toLowerCase() ?? '').includes(normalizedAdminSearch)
+
+            return matchesTable && matchesAdmin
+        })
+    }, [sortedAuditHistory, auditTableFilter, auditAdminSearch])
 
     const currencyFormatter = useMemo(() => {
         return new Intl.NumberFormat('en-US', {
@@ -203,12 +252,74 @@ export default function AdminPanel() {
         }
     }, [])
 
+    const fetchAuditHistoryPage = useCallback(async (reset = false) => {
+        if (auditHistoryLoadingRef.current) {
+            return
+        }
+
+        if (!reset && !auditHistoryHasMoreRef.current) {
+            return
+        }
+
+        auditHistoryLoadingRef.current = true
+        setAuditHistoryLoading(true)
+        setAuditHistoryError('')
+
+        try {
+            const offset = reset ? 0 : auditHistoryOffsetRef.current
+            const res = await fetch(`/api/db/getHistory?limit=${AUDIT_HISTORY_PAGE_SIZE}&offset=${offset}`, {
+                method: 'GET',
+                credentials: 'include',
+            })
+
+            if (!res.ok) {
+                throw new Error('Error history')
+            }
+
+            const data = await res.json() as HistoryRecord[]
+            const hasMore = data.length === AUDIT_HISTORY_PAGE_SIZE
+            auditHistoryHasMoreRef.current = hasMore
+            setAuditHistoryHasMore(hasMore)
+            auditHistoryOffsetRef.current = offset + data.length
+
+            setAuditHistory((prev) => {
+                const base = reset ? [] : prev
+                const ids = new Set(base.map((item) => String(item.id)))
+                const uniqueIncoming = data.filter((item) => {
+                    const itemId = String(item.id)
+                    if (ids.has(itemId)) {
+                        return false
+                    }
+                    ids.add(itemId)
+                    return true
+                })
+
+                return [...base, ...uniqueIncoming]
+            })
+        } catch (err) {
+            setAuditHistoryError('Could not load audit history.')
+            console.log(err)
+        } finally {
+            auditHistoryLoadingRef.current = false
+            setAuditHistoryLoading(false)
+        }
+    }, [])
+
     function handlePopupServicesScroll(e: UIEvent<HTMLDivElement>) {
         const element = e.currentTarget
         const nearBottom = element.scrollTop + element.clientHeight >= element.scrollHeight - 24
 
         if (nearBottom) {
             void fetchPopupServicesPage(false)
+        }
+    }
+
+    function handleAuditHistoryScroll(e: UIEvent<HTMLDivElement>) {
+        const element = e.currentTarget
+        const nearBottom = element.scrollTop + element.clientHeight >= element.scrollHeight - 24
+
+        if (nearBottom) {
+            void fetchAuditHistoryPage(false)
         }
     }
 
@@ -496,6 +607,13 @@ export default function AdminPanel() {
         }
     }
 
+    function handleOpenAuditHistoryPopup() {
+        setAuditTableFilter('all')
+        setAuditAdminSearch('')
+        setPopup('auditHistory')
+        void fetchAuditHistoryPage(true)
+    }
+
     const todayAppointments = appointments.filter((schedule) => {
         const scheduleDate = new Date(schedule.date)
         return (
@@ -618,6 +736,7 @@ export default function AdminPanel() {
                         {/* Audit button */}
                         <button
                             type="button"
+                            onClick={handleOpenAuditHistoryPopup}
                             className="bg-neutral-100 border border-neutral-300 rounded-lg hover:cursor-pointer flex gap-4 px-6 p-3 w-full"
                         >
                             <div className="w-16 h-16 bg-black rounded-lg relative flex items-center justify-center">
@@ -981,6 +1100,111 @@ export default function AdminPanel() {
                 </div>
             )}
 
+            {/* Audit history popup */}
+            {popup === 'auditHistory' && (
+                <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+                    <div className="w-full max-w-5xl bg-white border border-neutral-500 rounded-xl p-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-2xl font-bold text-black">Audit history</h3>
+                            <button
+                                type="button"
+                                onClick={() => setPopup('')}
+                                className="text-white bg-black rounded-md px-3 py-1 border border-red-500 cursor-pointer"
+                            >
+                                Close
+                            </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                            <div className="flex flex-col gap-1">
+                                <label htmlFor="audit-table-filter" className="text-xs font-semibold text-neutral-600">
+                                    Filter by table
+                                </label>
+                                <select
+                                    id="audit-table-filter"
+                                    value={auditTableFilter}
+                                    onChange={(e) => setAuditTableFilter(e.target.value)}
+                                    className="border border-neutral-300 rounded-md px-3 py-2 text-sm text-neutral-800"
+                                >
+                                    {auditTableOptions.map((table) => (
+                                        <option key={table} value={table}>
+                                            {table === 'all' ? 'All tables' : table}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="flex flex-col gap-1">
+                                <label htmlFor="audit-admin-search" className="text-xs font-semibold text-neutral-600">
+                                    Search admin
+                                </label>
+                                <input
+                                    id="audit-admin-search"
+                                    type="text"
+                                    value={auditAdminSearch}
+                                    onChange={(e) => setAuditAdminSearch(e.target.value)}
+                                    placeholder="Type an admin name"
+                                    className="border border-neutral-300 rounded-md px-3 py-2 text-sm text-neutral-800"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="hidden lg:grid lg:grid-cols-4 gap-2 px-3 py-2 text-xs font-semibold text-neutral-600 border-b border-neutral-200">
+                            <p>Admin</p>
+                            <p>Table</p>
+                            <p>Details</p>
+                            <p>Date</p>
+                        </div>
+
+                        {sortedAuditHistory.length === 0 ? (
+                            auditHistoryLoading ? (
+                                <p className="text-neutral-500 py-6 text-center">Loading audit history...</p>
+                            ) : auditHistoryError ? (
+                                <p className="text-red-600 py-6 text-center">{auditHistoryError}</p>
+                            ) : (
+                                <p className="text-neutral-500 py-6 text-center">No audit records yet.</p>
+                            )
+                        ) : filteredAuditHistory.length === 0 ? (
+                            <p className="text-neutral-500 py-6 text-center">No records match the current filters.</p>
+                        ) : (
+                            <div className="max-h-[60vh] overflow-y-auto" onScroll={handleAuditHistoryScroll}>
+                                {filteredAuditHistory.map((historyItem) => (
+                                    <div
+                                        key={`history-popup-${historyItem.id}-${historyItem.created_at ?? 'no-date'}`}
+                                        className="grid grid-cols-1 lg:grid-cols-4 gap-2 px-3 py-3 border-b border-neutral-100 text-sm text-neutral-800"
+                                    >
+                                        <p><span className="lg:hidden font-semibold">Admin: </span>{historyItem.admin ?? 'N/A'}</p>
+                                        <p><span className="lg:hidden font-semibold">Table: </span>{historyItem.on_table ?? 'N/A'}</p>
+                                        <p><span className="lg:hidden font-semibold">Details: </span>{historyItem.details ?? 'N/A'}</p>
+                                        <p>
+                                            <span className="lg:hidden font-semibold">Date: </span>
+                                            {historyItem.created_at
+                                                ? new Intl.DateTimeFormat('en-US', {
+                                                    month: 'short',
+                                                    day: 'numeric',
+                                                    year: 'numeric',
+                                                    hour: 'numeric',
+                                                    minute: '2-digit',
+                                                    hour12: true,
+                                                }).format(new Date(historyItem.created_at))
+                                                : 'N/A'}
+                                        </p>
+                                    </div>
+                                ))}
+                                {auditHistoryLoading && (
+                                    <p className="text-center text-xs text-neutral-500 py-3">Loading more records...</p>
+                                )}
+                                {!auditHistoryHasMore && (
+                                    <p className="text-center text-xs text-neutral-500 py-3">End of list.</p>
+                                )}
+                                {auditHistoryError && (
+                                    <p className="text-center text-xs text-red-600 py-3">{auditHistoryError}</p>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
             {/*adoption pet management popup */}
             {popup === 'addAdoptionPet' && (
                 <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
@@ -1096,7 +1320,7 @@ export default function AdminPanel() {
                                     <div className="max-h-110 overflow-y-auto pr-1 space-y-2">
                                         {adoptionPets.map((pet) => {
                                             const hasPetImage = typeof pet.image === 'string' && pet.image.trim().length > 0
-                                            const petImageSrc = hasPetImage ? pet.image : '/images/adoptions/cat-box.png'
+                                            const petImageSrc = hasPetImage && pet.image ? pet.image : '/images/adoptions/cat-box.png'
 
                                             return (
                                                 <div key={`adoption-pet-${pet.id}`} className="border border-neutral-200 rounded-lg p-3 flex items-center justify-between gap-3">

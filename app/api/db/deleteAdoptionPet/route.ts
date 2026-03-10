@@ -37,7 +37,7 @@ export async function DELETE(req: Request) {
 
         const { data: adoptionPet, error: adoptionPetError } = await supabase
             .from('adoptions')
-            .select('id, image')
+            .select('id, name, image')
             .eq('id', adoptionPetId)
             .single()
 
@@ -65,6 +65,27 @@ export async function DELETE(req: Request) {
             if (storagePath) {
                 await supabase.storage.from('adoption-pets').remove([storagePath])
             }
+        }
+
+        const historyUrl = new URL('/api/db/postHistory', req.url)
+        const postHistoryRes = await fetch(historyUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                cookie: req.headers.get('cookie') ?? ''
+            },
+            body: JSON.stringify({
+                on_table: 'Adoptions',
+                details: `Deleted pet: ${adoptionPet.name} #${adoptionPet.id}`
+            })
+        })
+
+        if (!postHistoryRes.ok) {
+            const data = await postHistoryRes.json().catch(() => null)
+            return NextResponse.json(
+                { error: data?.error ?? 'Unable to register audit history' },
+                { status: postHistoryRes.status }
+            )
         }
 
         return NextResponse.json({ success: true })
