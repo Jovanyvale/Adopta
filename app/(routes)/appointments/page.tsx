@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useMemo, useState } from "react"
+import { Suspense, useEffect, useMemo, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 
 type SubmitStatus = "idle" | "loading" | "success" | "error"
@@ -30,7 +30,7 @@ function getYmdDate(date: Date) {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`
 }
 
-export default function Appointments() {
+function AppointmentsContent() {
     const router = useRouter()
     const searchParams = useSearchParams()
 
@@ -320,5 +320,13 @@ export default function Appointments() {
                 </div>
             )}
         </div>
+    )
+}
+
+export default function Appointments() {
+    return (
+        <Suspense fallback={<div className="w-[92%] max-w-4xl mx-auto mt-10 mb-16">Loading appointments...</div>}>
+            <AppointmentsContent />
+        </Suspense>
     )
 }
